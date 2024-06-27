@@ -1,0 +1,24 @@
+{
+  "name": "evalisland",
+  "version": "1.0.0",
+  "description": "A library to provide ability to ECMAScript to deliver it's computations to CPP.",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc",
+    "test": "jest --silent"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.24.7",
+    "@babel/preset-env": "^7.24.7",
+    "@babel/preset-typescript": "^7.24.7",
+    "@types/jest": "^29.5.12",
+    "babel-jest": "^29.7.0",
+    "ts-jest": "^29.1.5",
+    "typescript": "^5.5.2"
+  },
+  "dependencies": {
+    "jest": "^29.7.0"
+  }
+}
