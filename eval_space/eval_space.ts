@@ -7,8 +7,8 @@ export class EvalSpace {
         this.tiedIsland = IslandFactory(t);
     }
 
-    async Prerequisitions() {
-        await this.tiedIsland.Prerequisitions();
+    async Prerequisitions(): Promise<boolean> {
+        return await this.tiedIsland.Prerequisitions();
     }
 
     async PolyFunc(nums: Float64Array) {

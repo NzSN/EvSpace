@@ -1,7 +1,7 @@
-import { Island } from "./Island";
+import { Eval } from "./eval";
 import Module from './EvalBox';
 
-export class WasmIsland implements Island {
+export class WasmIsland implements Eval {
     private _mod: any;
 
     constructor() {}

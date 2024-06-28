@@ -1,4 +1,5 @@
 import { Eval } from "./eval";
+import * as polyfunc from "../eval/natives/polyfunc";
 
 
 export class ExtendedIsland implements Eval {
@@ -8,9 +9,7 @@ export class ExtendedIsland implements Eval {
         });
     }
 
-    PolyFunc(nums: Float64Array): Promise<number> {
-        return new Promise((resolve, _) => {
-            resolve(1);
-        });
+    async PolyFunc(nums: Float64Array): Promise<number> {
+        return polyfunc.PolyFunction(nums);
     }
 }
