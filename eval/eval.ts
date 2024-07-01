@@ -1,18 +1,7 @@
 export interface Eval {
     Prerequisitions(): Promise<boolean>;
-    PolyFunc(nums: Float64Array): Promise<number>;
-}
-
-export class StandardIsland implements Eval {
-    Prerequisitions(): Promise<boolean> {
-        return new Promise((resolve, _) => {
-            resolve(true);
-        });
-    }
-
-    PolyFunc(nums: Float64Array): Promise<number> {
-        return new Promise((resolve, ) => {
-            resolve(1);
-        });
-    }
+    PolyFunc(nums: Float64Array): number;
+    Sort(nums: Float64Array): void;
+    SortWithDebug(nums: Float64Array): number;
+    Pthreadtest(): number;
 }

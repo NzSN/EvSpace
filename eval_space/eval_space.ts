@@ -11,7 +11,19 @@ export class EvalSpace {
         return await this.tiedIsland.Prerequisitions();
     }
 
-    async PolyFunc(nums: Float64Array) {
-        return await this.tiedIsland.PolyFunc(nums);
+    PolyFunc(nums: Float64Array) {
+        return this.tiedIsland.PolyFunc(nums);
+    }
+
+    Sort(nums: Float64Array) {
+        return this.tiedIsland.Sort(nums);
+    }
+
+    SortWithDebug(nums: Float64Array) {
+        return this.tiedIsland.SortWithDebug(nums);
+    }
+
+    PthreadTest() {
+        return this.tiedIsland.PthreadTest();
     }
 }

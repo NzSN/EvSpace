@@ -1,10 +1,19 @@
 {
   "targets": [
     {
-    "target_name": "polyfunc",
-    "sources": ["poly.cc"],
-    "cflags!": ["-fno-exceptions", "-O2"],
-    "cflags_cc!": ["-fno-exceptions", "-O2"],
+    "target_name": "evaln",
+    "sources": [
+      "module.cc",
+
+      "base.cc",
+
+      "poly.cc",
+      "../evals/poly.cc",
+
+      "sort.cc",
+      "../evals/sort.cc"],
+    "cflags!": ["-fno-exceptions"],
+    "cflags_cc!": ["-fno-exceptions"],
     "include_dirs": [
       "<!@(node -p \"require('node-addon-api').include\")"
     ]
