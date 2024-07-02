@@ -1,0 +1,17 @@
+load("@aspect_rules_js//js:defs.bzl", "js_test")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@aspect_rules_jest//jest:defs.bzl", "jest_test")
+
+
+ts_project(
+    name = "compile",
+    srcs = ["test.ts"],
+    transpiler = "tsc",
+    tsconfig = "//:ts_config",
+)
+
+jest_test(
+    name = "test",
+    data = [":compile"],
+    node_modules = "//:node_modules",
+)
