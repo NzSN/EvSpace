@@ -49,6 +49,6 @@ export class WasmIsland implements Eval {
     }
 
     PthreadTest(): number {
-        return 1;
+        return this._mod._PthreadTest();
     }
 }

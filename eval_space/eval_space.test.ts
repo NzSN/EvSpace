@@ -37,7 +37,7 @@ test("Polynomial function eval", async () => {
 });
 
 test("Sort", async () => {
-    let count = 10000;
+    let count = 100000;
     let nums = new Float64Array(count);
     for (let i = 0; i < nums.length; ++i) {
         nums[i] = nums.length - i;
@@ -56,5 +56,14 @@ test("Sort", async () => {
 });
 
 test("Multithread", async () => {
-    console.log(extendedSpace.PthreadTest());
+
+    let t0 = performance.now();
+    expect(extendedSpace.PthreadTest() == 200000).toBeTruthy();
+    let t1 = performance.now();
+
+    let t2 = performance.now();
+    expect(wasmSpace.PthreadTest() == 200000).toBeTruthy();
+    let t3 = performance.now();
+
+    console.log(`Multithread: WASM(${t1 - t0}) EXT(${t3 - t2})`)
 });

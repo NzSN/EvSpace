@@ -4,8 +4,9 @@
   "description": "A library to provide ability to ECMAScript to deliver it's computations to CPP.",
   "main": "index.js",
   "scripts": {
+    "start": "electron .",
     "build": "npx tsc",
-    "test": "jest --silent"
+    "test": "ELECTRON_RUN_AS_NODE=true ./node_modules/.bin/electron ./node_modules/.bin/jest"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +17,7 @@
     "@types/jest": "^29.5.12",
     "babel-jest": "^29.7.0",
     "benny": "^3.7.1",
+    "electron": "^31.1.0",
     "ts-jest": "^29.1.5",
     "typescript": "^5.5.2"
   },
