@@ -7,7 +7,9 @@ ts_project(
     name = "compile",
     srcs = ["test.ts"],
     transpiler = "tsc",
+    declaration = True,
     tsconfig = "//:ts_config",
+    deps = ["//:node_modules"],
 )
 
 jest_test(
