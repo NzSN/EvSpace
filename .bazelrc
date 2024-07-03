@@ -1,6 +1,8 @@
 startup
 build --cxxopt=-std=c++2b
 build --noincompatible_sandbox_hermetic_tmp
+build --incompatible_enable_cc_toolchain_resolution
+
 
 
 # honor the setting of `skipLibCheck` in the tsconfig.json file
