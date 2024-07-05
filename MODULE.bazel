@@ -7,18 +7,20 @@ module(
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "platforms", version = "0.0.9")
 bazel_dep(name = "aspect_bazel_lib", version = "2.7.7")
-bazel_dep(name = "aspect_rules_ts", version = "2.4.2")
-bazel_dep(name = "aspect_rules_js", version = "1.42.3")
+bazel_dep(name = "aspect_rules_ts", version = "3.0.0-rc0")
+bazel_dep(name = "aspect_rules_js", version = "2.0.0-rc0")
+bazel_dep(name = "aspect_rules_jest", version = "0.22.0-rc0")
+
 
 rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext", dev_dependency = True)
 rules_ts_ext.deps()
 use_repo(rules_ts_ext, "npm_typescript")
 
-####### Node.js version #########
+#########
 # By default you get the node version from DEFAULT_NODE_VERSION in @rules_nodejs//nodejs:repositories.bzl
 # Optionally you can pin a different node version:
-bazel_dep(name = "rules_nodejs", version = "5.8.2")
-node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
+bazel_dep(name = "rules_nodejs", version = "6.2.0", repo_name = "rules_nodejs_6")
+node = use_extension("@rules_nodejs_6//nodejs:extensions.bzl", "node", dev_dependency = True)
 node.toolchain(node_version = "18.17.1")
 #################################
 

@@ -2,26 +2,9 @@ workspace(name="evspace")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-http_archive(
-    name = "emsdk_rules_nodejs",
-    repo_mapping = {"@rules_nodejs":"@emsdk_rules_nodejs"},
-    sha256 = "08337d4fffc78f7fe648a93be12ea2fc4e8eb9795a4e6aa48595b66b34555626",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.8.0/rules_nodejs-core-5.8.0.tar.gz"]
-)
-
-http_archive(
-    name = "emsdk_build_bazel_rules_nodejs",
-    repo_mapping = {"@rules_nodejs":"@emsdk_rules_nodejs",
-                    "@build_bazel_rules_nodejs":"@emsdk_build_bazel_rules_nodejs"},
-    sha256 = "dcc55f810142b6cf46a44d0180a5a7fb923c04a5061e2e8d8eb05ccccc60864b",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.8.0/rules_nodejs-5.8.0.tar.gz"]
-)
 
 http_archive(
     name = "emsdk",
-    repo_mapping = {"@rules_nodejs":"@emsdk_rules_nodejs",
-                    "@build_bazel_rules_nodejs":"@emsdk_build_bazel_rules_nodejs",
-                    "@nodejs_linux_amd64":"@emsdk_nodejs_linux_amd64"},
     strip_prefix = "emsdk-3.1.60/bazel",
     url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/3.1.60.tar.gz",
 )
