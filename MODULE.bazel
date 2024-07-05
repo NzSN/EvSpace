@@ -11,18 +11,17 @@ bazel_dep(name = "aspect_rules_ts", version = "3.0.0-rc0")
 bazel_dep(name = "aspect_rules_js", version = "2.0.0-rc0")
 bazel_dep(name = "aspect_rules_jest", version = "0.22.0-rc0")
 
-
 rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext", dev_dependency = True)
 rules_ts_ext.deps()
 use_repo(rules_ts_ext, "npm_typescript")
 
-#########
+#########################################################################################################
 # By default you get the node version from DEFAULT_NODE_VERSION in @rules_nodejs//nodejs:repositories.bzl
-# Optionally you can pin a different node version:
-bazel_dep(name = "rules_nodejs", version = "6.2.0", repo_name = "rules_nodejs_6")
-node = use_extension("@rules_nodejs_6//nodejs:extensions.bzl", "node", dev_dependency = True)
-node.toolchain(node_version = "18.17.1")
-#################################
+# Optionally you can pin a different node version: ######################################################
+bazel_dep(name = "rules_nodejs", version = "6.2.0", repo_name = "rules_nodejs_another") #################
+node = use_extension("@rules_nodejs_another//nodejs:extensions.bzl", "node", dev_dependency = True) #####
+node.toolchain(node_version = "18.17.1") ################################################################
+#########################################################################################################
 
 npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm", dev_dependency = True)
 

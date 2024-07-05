@@ -1,11 +1,20 @@
-load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
-
-cc_binary(
-    name = "main",
-    srcs = ["main.cc"],
+filegroup(
+    name = "sort-base-srcs",
+    srcs = ["sort.h", "sort_declarations.h"],
 )
 
-wasm_cc_binary(
-    name = "main-wasm",
-    cc_target = ":main",
+filegroup(
+    name = "insert-sort-srcs",
+    srcs = ["insertion_sort.h", "insertion_sort.cc"]
+)
+
+filegroup(
+    name = "sort-srcs",
+    srcs = [":sort-base-srcs", ":insert-sort-srcs"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "sort",
+    srcs = [":filegroup"],
 )

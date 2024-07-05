@@ -8,7 +8,9 @@ namespace EVAL {
 namespace BASIS {
 namespace SORT {
 
-class SortBasis: public Basis {};
+DECLARE_BASIS(SortBasis);
+#define DECLARE_CONCRETE_SORT_BASIS(CONCRETE, R, ...) \
+  DECLARE_CONCRETE_BASIS(SortBasis, CONCRETE, R, __VA_ARGS__)
 
 } // SORT
 } // BASIS

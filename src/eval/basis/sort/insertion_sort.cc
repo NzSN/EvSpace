@@ -1,4 +1,5 @@
 #include "insertion_sort.h"
+#include "eval/basis/basis.h"
 
 #include <algorithm>
 
@@ -7,8 +8,10 @@ namespace EVAL {
 namespace BASIS {
 namespace SORT {
 
+DEFINE_CONCRETE_BASIS(
+  InsertionSort,
+  void, double *seq, size_t size) {
 
-void InsertionSort::operator()(double *seq, size_t size) {
   if (size < 2) return;
 
   for (int i = 1; i < size; ++i) {
@@ -21,8 +24,7 @@ void InsertionSort::operator()(double *seq, size_t size) {
     }
     seq[j + 1] = key;
   }
-}
-
+};
 
 } // SORT
 } // BASIS
