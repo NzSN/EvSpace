@@ -16,5 +16,8 @@ filegroup(
 
 cc_library(
     name = "sort",
-    srcs = [":filegroup"],
+    srcs = [":sort-srcs",
+            "//src/eval/basis:basis-headers"],
+    deps = ["@proxy//:proxy"],
+    visibility = ["//visibility:public"],
 )

@@ -1,10 +1,13 @@
 #ifndef EVSPACE_EVAL_BASIS_BASIS_H_
 #define EVSPACE_EVAL_BASIS_BASIS_H_
 
+#include "proxy/proxy.h"
+
 namespace EVSPACE {
 namespace EVAL {
 namespace BASIS {
 
+PRO_DEF_MEMBER_DISPATCH(__NAME, ...)
 
 // Work as type wrapper to define Basis in
 // type system.
