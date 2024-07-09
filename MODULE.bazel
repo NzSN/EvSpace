@@ -4,6 +4,7 @@ module(
     compatibility_level = 1
 )
 
+bazel_dep(name = "googletest", version = "1.14.0", repo_name = "com_google_googletest")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "platforms", version = "0.0.9")
 bazel_dep(name = "aspect_bazel_lib", version = "2.7.7")
@@ -42,9 +43,7 @@ use_repo(pnpm, "pnpm")
 # C++ Related
 bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
 evspace_ext = use_extension("@evspace//:bazel/extensions.bzl", "ext")
-use_repo(evspace_ext, "proxy")
-
-bazel_dep(name = "googletest", version = "1.14.0", repo_name = "com_google_googletest")
+use_repo(evspace_ext, "proxy", "rapidcheck")
 
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor

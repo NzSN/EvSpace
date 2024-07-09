@@ -7,27 +7,35 @@ namespace EVSPACE {
 namespace EVAL {
 namespace BASIS {
 
-PRO_DEF_MEMBER_DISPATCH(__NAME, ...)
+/* BasisUnit  */
+PRO_DEF_OPERATOR_DISPATCH(Basis, "()");
 
-// Work as type wrapper to define Basis in
-// type system.
-struct Basis {};
+template<typename... Overloads>
+struct BasisCallable :
+    pro::facade_builder
+    ::add_convention<Basis, Overloads...>
+    ::build {};
 
-#define DECLARE_BASIS_OPERATOR(R, ...) \
-  static R operator()(__VA_ARGS__)
-#define DEFINE_BASIS_OPERATOR(B, R, ...) \
-  R B::operator()(__VA_ARGS__)
-#define DECLARE_BASIS(B) struct B: public Basis {}
-#define DECLARE_CONCRETE_BASIS(ABSTRACT, CONCRETE, R, ...)            \
-  struct CONCRETE: public ABSTRACT {                                  \
-    CONCRETE() {                                                      \
-      static_assert(std::is_invocable_r_v<R, CONCRETE, __VA_ARGS__>); \
-    }                                                                 \
-    DECLARE_BASIS_OPERATOR(R, __VA_ARGS__);                           \
-  };
+struct CopyableCallable :
+    pro::facade_builder
+    ::support_copy<pro::constraint_level::nontrivial>
+    ::build {};
 
-#define DEFINE_CONCRETE_BASIS(CONCRETE, R, ...) \
-  DEFINE_BASIS_OPERATOR(CONCRETE, R, __VA_ARGS__)
+struct Destructable :
+    pro::facade_builder
+    ::support_destruction<pro::constraint_level::nontrivial>
+    ::build {};
+
+template<typename... Overloads>
+struct BasisUnit :
+    pro::facade_builder
+    ::add_facade<BasisCallable<Overloads...>>
+    ::template add_facade<CopyableCallable>
+    ::template add_facade<Destructable>
+    ::build {};
+
+template<typename... Overloads>
+using ProBasis = pro::proxy<BasisUnit<Overloads...>>;
 
 } // BASIS
 } // EVAL

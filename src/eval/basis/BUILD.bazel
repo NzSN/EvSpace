@@ -8,9 +8,3 @@ filegroup(
     name = "basis-srcs",
     srcs = ["basis.h", "basis_declarations.h"],
 )
-
-cc_library(
-    name = "basis",
-    hdrs = [":basis-srcs"],
-    deps = ["@evspace//src/eval/basis/sort:sort"],
-)

@@ -5,7 +5,7 @@ filegroup(
 
 filegroup(
     name = "insert-sort-srcs",
-    srcs = ["insertion_sort.h", "insertion_sort.cc"]
+    srcs = ["insertion_sort.h"]
 )
 
 filegroup(
@@ -14,10 +14,12 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-cc_library(
-    name = "sort",
-    srcs = [":sort-srcs",
+cc_test(
+    name = "sort-unittest",
+    srcs = ["insertion_sort_unittest.cc",
+            ":sort-srcs",
             "//src/eval/basis:basis-headers"],
-    deps = ["@proxy//:proxy"],
-    visibility = ["//visibility:public"],
+    deps = ["@proxy//:proxy",
+            "@com_google_googletest//:gtest_main",
+            "@rapidcheck//:rapidcheck"],
 )
