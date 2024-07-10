@@ -12,13 +12,14 @@ WASM_OPTS = [
 ]
 
 cc_binary(
-    name = "wasm-space-cc",
+    name = "wasm-space",
     srcs = ["wasm_space.h", "wasm_space.cc"],
     deps = ["//src/eval/basis:basis"],
     linkopts = WASM_OPTS,
 )
 
 wasm_cc_binary(
-    name = "wasm-space",
-    cc_target = ":wasm-space-cc",
+    name = "wasm-space-cc",
+    cc_target = ":wasm-space",
+    visibility = ["//visibility:public"]
 )
