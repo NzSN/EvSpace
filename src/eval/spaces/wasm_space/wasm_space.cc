@@ -1,0 +1,3 @@
+#include "wasm_space.h"
+
+DECLARED_BASISES(SPAN_WASM_SPACE_FROM_BASIS)

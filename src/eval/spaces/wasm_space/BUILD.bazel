@@ -1,0 +1,24 @@
+load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
+
+WASM_OPTS = [
+    "-sUSE_PTHREADS=1",
+    "-pthread",
+    "-O3",
+    "-sWASM=1",
+    "-sFETCH=1",
+    "-sMODULARIZE=1",
+    "-sEXPORT_NAME=Eval",
+    "-sEXPORTED_FUNCTIONS=\"['_malloc', '_free']\""
+]
+
+cc_binary(
+    name = "wasm-space-cc",
+    srcs = ["wasm_space.h", "wasm_space.cc"],
+    deps = ["//src/eval/basis:basis"],
+    linkopts = WASM_OPTS,
+)
+
+wasm_cc_binary(
+    name = "wasm-space",
+    cc_target = ":wasm-space-cc",
+)
