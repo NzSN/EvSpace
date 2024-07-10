@@ -14,17 +14,15 @@ def _ext_impl(ctx):
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 
 filegroup(
-    name = "proxy_srcs",
-    srcs = glob(["**"]),
+    name = "proxy-srcs",
+    srcs = ["proxy.h"],
 )
 
-cmake(
+cc_library(
     name = "proxy",
-    lib_source = ":proxy_srcs",
-    out_include_dir = "include",
-    out_headers_only = True,
-    generate_args = ["-DBUILD_TESTING=off"],
-    visibility = ["//visibility:public"],
+    hdrs = [":proxy-srcs"],
+    include_prefix = "proxy",
+    visibility = ["//visibility:public"]
 )
         """)
 
