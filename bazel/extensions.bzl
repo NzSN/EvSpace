@@ -11,8 +11,6 @@ def _ext_impl(ctx):
         branch = "main",
         build_file_content =
         """
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
-
 filegroup(
     name = "proxy-srcs",
     srcs = ["proxy.h"],
@@ -22,7 +20,7 @@ cc_library(
     name = "proxy",
     hdrs = [":proxy-srcs"],
     include_prefix = "proxy",
-    visibility = ["//visibility:public"]
+    visibility = ["//visibility:public"],
 )
         """)
 
