@@ -26,7 +26,9 @@ concept OrderableAndSpanble = requires(T t , T u, size_t size) {
 };
 
 template<OrderableAndSpanble T>
-using SortBasisUnit = ProBasis<void(std::span<T>&)>;
+using SortBasisUnit = ProBasis<
+  void(std::span<T>&),
+  void(std::span<T>&&)>;
 
 } // SORT
 } // BASIS

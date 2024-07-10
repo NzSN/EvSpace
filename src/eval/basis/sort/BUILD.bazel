@@ -1,11 +1,26 @@
 filegroup(
     name = "sort-base-srcs",
-    srcs = ["sort.h", "sort_declarations.h"],
+    srcs = ["sort.h",
+            "sort_declarations.h",
+            "sort_declarations.cc"],
 )
 
 filegroup(
     name = "insert-sort-srcs",
     srcs = ["insertion_sort.h"]
+)
+
+filegroup(
+    name = "insert-sort-hdrs",
+    srcs = ["insertion_sort.h"],
+)
+
+filegroup(
+    name = "sort-hdrs",
+    srcs = ["sort.h",
+            "sort_declarations.h",
+            ":insert-sort-hdrs"],
+    visibility = ["//visibility:public"]
 )
 
 filegroup(
@@ -19,7 +34,7 @@ cc_test(
     srcs = ["insertion_sort_unittest.cc",
             ":sort-srcs",
             "//src/eval/basis:basis-headers"],
-    deps = ["@proxy//:proxy",
-            "@com_google_googletest//:gtest_main",
-            "@rapidcheck//:rapidcheck"],
+    deps = ["@com_google_googletest//:gtest_main",
+            "@rapidcheck//:rapidcheck",
+            "@proxy//:proxy"],
 )

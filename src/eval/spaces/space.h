@@ -3,11 +3,6 @@
 
 namespace EVSPACE::EVAL::SPACE {
 
-namespace Sepcialized {
-
-} // Specialized
-
-
 
 } // EVSPACE::EVAL::SPACE
 

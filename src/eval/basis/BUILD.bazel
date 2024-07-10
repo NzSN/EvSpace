@@ -1,10 +1,21 @@
 filegroup(
     name = "basis-headers",
-    srcs = ["basis.h"],
+    srcs = ["basis.h",
+            "//src/eval/basis/sort:sort-hdrs"],
     visibility = ["__subpackages__"],
 )
 
 filegroup(
     name = "basis-srcs",
     srcs = ["basis.h", "basis_declarations.h"],
+    visibility = ["__subpackages__"],
+)
+
+cc_library(
+    name = "basis",
+    srcs = [":basis-srcs",
+            "//src/eval/basis/sort:sort-srcs"],
+    hdrs = ["basis-headers"],
+    deps = ["@proxy//:proxy"],
+    visibility = ["//visibility:public"],
 )

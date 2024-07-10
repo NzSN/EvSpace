@@ -32,6 +32,10 @@ struct InsertionSort {
         seq[j + 1] = key;
     }
   }
+
+  void operator()(S &&seq) {
+    this->operator()(seq);
+  }
 };
 
 } // SORT
