@@ -4,5 +4,6 @@ node_binary(
     name = "hello",
     srcs = ["hello.cc"],
     copts = ["-fno-exceptions"],
-    node_modules = "//:node_modules"
+    node_modules = "//:node_modules",
+    visibility = ["//visibility:public"]
 )

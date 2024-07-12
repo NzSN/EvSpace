@@ -4,8 +4,6 @@ module(
     compatibility_level = 1
 )
 
-
-bazel_dep(name = "node_native_rules", version = "0.0.1")
 bazel_dep(name = "googletest", version = "1.14.0", repo_name = "com_google_googletest")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "platforms", version = "0.0.9")
@@ -13,6 +11,7 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.7.7")
 bazel_dep(name = "aspect_rules_ts", version = "3.0.0-rc0")
 bazel_dep(name = "aspect_rules_js", version = "2.0.0-rc0")
 bazel_dep(name = "aspect_rules_jest", version = "0.22.0-rc0")
+bazel_dep(name = "aspect_rules_swc", version = "2.0.0-rc1")
 
 rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext", dev_dependency = True)
 rules_ts_ext.deps()
@@ -58,3 +57,5 @@ git_override(
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )
 
+bazel_dep(name = "node_native_rules", version = "0.0.1")
+local_path_override(module_name ="node_native_rules", path="/home/nzsn/Codebases/node_native_rules")

@@ -9,3 +9,5 @@ ts_config(
     src  = "tsconfig.json",
     visibility = [":__subpackages__"],
 )
+
+exports_files([".swcrc"])
