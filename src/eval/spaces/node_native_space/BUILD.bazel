@@ -1,0 +1,8 @@
+load("@node_native_rules//:natives/node_binary.bzl", "node_binary")
+
+node_binary(
+    name = "hello",
+    srcs = ["hello.cc"],
+    copts = ["-fno-exceptions"],
+    node_modules = "//:node_modules"
+)
