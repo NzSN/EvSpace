@@ -1,0 +1,11 @@
+
+load("@aspect_rules_jest//jest:defs.bzl", "jest_test")
+
+jest_test(
+    name = "test",
+    data = ["//:main",
+            "test.ts",
+            "babel.config.cjs",
+            "jest.config.cjs"],
+    node_modules = "//:node_modules",
+)

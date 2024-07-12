@@ -1,9 +1,6 @@
-load("@aspect_rules_js//js:defs.bzl", "js_test")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 load("@npm//:defs.bzl", "npm_link_all_packages")
-load("@aspect_rules_js//js:defs.bzl", "js_test")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
-load("@aspect_rules_jest//jest:defs.bzl", "jest_test")
 load("@bazel_skylib//lib:partial.bzl", "partial")
 load("@aspect_rules_swc//swc:defs.bzl", "swc")
 
@@ -17,8 +14,8 @@ ts_config(
 )
 
 ts_project(
-    name = "compile",
-    srcs = ["test.ts"],
+    name = "main",
+    srcs = ["//src:index"],
     data = [
         "//src/eval/spaces/node_native_space:hello",
         "//src/eval/spaces/wasm_space:wasm-space-cc"
@@ -29,12 +26,6 @@ ts_project(
     declaration = True,
     tsconfig = "//:ts_config",
     deps = ["//:node_modules"],
+    visibility = ["__subpackages__"],
 )
 
-jest_test(
-    name = "test",
-    data = [":compile",
-            "babel.config.cjs",
-            "jest.config.cjs"],
-    node_modules = "//:node_modules",
-)
