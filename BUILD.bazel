@@ -15,7 +15,7 @@ ts_config(
 
 ts_project(
     name = "main",
-    srcs = ["//src:index"],
+    srcs = ["src/web/index.ts"],
     data = [
         "//src/eval/spaces/node_native_space:hello",
         "//src/eval/spaces/wasm_space:wasm-space-cc"

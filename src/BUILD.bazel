@@ -1,5 +1,0 @@
-filegroup(
-    name = "index",
-    srcs = ["index.ts"],
-    visibility = ["//visibility:public"],
-)
