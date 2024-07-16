@@ -58,3 +58,4 @@ git_override(
 )
 
 bazel_dep(name = "node_native_rules", version = "0.0.1")
+local_path_override(module_name = "node_native_rules", path = "/home/nzsn/Codebases/node_native_rules")

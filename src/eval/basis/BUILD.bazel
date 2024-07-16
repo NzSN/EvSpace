@@ -2,13 +2,13 @@ filegroup(
     name = "basis-headers",
     srcs = ["basis.h",
             "//src/eval/basis/sort:sort-hdrs"],
-    visibility = ["__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 filegroup(
     name = "basis-srcs",
     srcs = ["basis.h", "basis_declarations.h"],
-    visibility = ["__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(

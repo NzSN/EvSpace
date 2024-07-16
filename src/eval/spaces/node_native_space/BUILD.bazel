@@ -2,8 +2,11 @@ load("@node_native_rules//:natives/node_binary.bzl", "node_binary")
 
 node_binary(
     name = "hello",
-    srcs = ["hello.cc"],
-    copts = ["-fno-exceptions"],
+    srcs = ["hello.cc",
+            "codegen.h",
+            "node_native_space.h"],
+    copts = ["-std=c++20", "-xc++"],
+    include_dirs = ["./src"],
     node_modules = "//:node_modules",
     visibility = ["//visibility:public"]
 )

@@ -8,6 +8,7 @@
   EMSCRIPTEN_KEEPALIVE R BASIS##w (__VA_ARGS__)
 #define PRINT_PARA(...) __VA_ARGS__
 #define AS_WASM_BASIS(BASIS, SIGNATURE, PARA_NAME, TYPES) \
+  extern "C" { SIGNATURE(GEN_SIGNATURE); }                              \
   SIGNATURE(GEN_SIGNATURE) {                                            \
     return BASIS(PARA_NAME(PRINT_PARA));                                               \
   }
