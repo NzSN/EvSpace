@@ -11,11 +11,6 @@ extern "C" {
   void insertionSort(double *seq, size_t size);
 }
 
-namespace EVSPACE {
-namespace EVAL {
-namespace BASIS {
-namespace SORT {
-
 /* Those Basis that expected to publish globally
  * need be listed here otherwise those Basis
  * is not registered into any non-trivial spaces. */
@@ -34,10 +29,5 @@ namespace SORT {
   V(seq, size)
 #define insertionTypes(V)                       \
   V(void, double*, size_t)
-
-} // SORT
-} // BASIS
-} // EVAL
-} // EVSPACE
 
 #endif /* EVSPACE_EVAL_BASIS_SORT_SORTH_H_ */

@@ -2,9 +2,8 @@
 #define EVSPACE_EVAL_BASIS_SORT_INSERTION_SORT_H_
 
 #include <algorithm>
-#include <concepts>
 #include <stddef.h>
-#include "eval/basis/basis.h"
+
 #include "sort.h"
 
 
@@ -13,12 +12,10 @@ namespace EVAL {
 namespace BASIS {
 namespace SORT {
 
-template<OrderableAndSpanble T,
-         typename S = std::span<T>>
-struct InsertionSort {
-  void operator()(S &seq) {
-    auto size = seq.size();
-
+template<typename T>
+struct InsertionSort : Basis<InsertionSort<T>,
+                             void(T*, size_t)> {
+  void operator()(T* seq, size_t size) {
     if (size < 2) return;
 
     for (size_t i = 1; i < size; ++i) {
@@ -31,10 +28,6 @@ struct InsertionSort {
         }
         seq[j + 1] = key;
     }
-  }
-
-  void operator()(S &&seq) {
-    this->operator()(seq);
   }
 };
 

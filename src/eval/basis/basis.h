@@ -1,41 +1,32 @@
 #ifndef EVSPACE_EVAL_BASIS_BASIS_H_
 #define EVSPACE_EVAL_BASIS_BASIS_H_
 
-#include "proxy/proxy.h"
+#include <type_traits>
 
 namespace EVSPACE {
 namespace EVAL {
 namespace BASIS {
 
-/* BasisUnit  */
-PRO_DEF_OPERATOR_DISPATCH(Basis, "()");
 
-template<typename... Overloads>
-struct BasisCallable :
-    pro::facade_builder
-    ::add_convention<Basis, Overloads...>
-    ::build {};
+template<typename T, typename... Overloads>
+struct BasisImpl;
 
-struct CopyableCallable :
-    pro::facade_builder
-    ::support_copy<pro::constraint_level::nontrivial>
-    ::build {};
+template<typename T, typename R, typename... Args>
+struct BasisImpl<T, R(Args...)> {
+  BasisImpl() {
+    static_assert(std::is_invocable_r<R, T, Args...>());
+  }
 
-struct Destructable :
-    pro::facade_builder
-    ::support_destruction<pro::constraint_level::nontrivial>
-    ::build {};
+ 
+  R operator()(Args... args) {
+    return static_cast<T*>(this)->operator()(args...);
+  }
+};
 
-template<typename... Overloads>
-struct BasisUnit :
-    pro::facade_builder
-    ::add_facade<BasisCallable<Overloads...>>
-    ::template add_facade<CopyableCallable>
-    ::template add_facade<Destructable>
-    ::build {};
+// TODO: Support arbitary Overloads
+template<typename T, typename Overloads>
+struct Basis : BasisImpl<T, Overloads> {};
 
-template<typename... Overloads>
-using ProBasis = pro::proxy<BasisUnit<Overloads...>>;
 
 } // BASIS
 } // EVAL

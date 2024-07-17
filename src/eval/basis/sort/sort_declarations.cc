@@ -5,8 +5,5 @@
 namespace SORT = EVSPACE::EVAL::BASIS::SORT;
 
 void insertionSort(double *seq, size_t size) {
-  SORT::InsertionSort<double> sort;
-  SORT::SortBasisUnit<double> unit{&sort};
 
-  (*unit)(std::span{seq, size});
 }

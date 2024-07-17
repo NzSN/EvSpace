@@ -35,6 +35,5 @@ cc_test(
             ":sort-srcs",
             "//src/eval/basis:basis-headers"],
     deps = ["@com_google_googletest//:gtest_main",
-            "@rapidcheck//:rapidcheck",
-            "@proxy//:proxy"],
+            "@rapidcheck//:rapidcheck"],
 )

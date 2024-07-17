@@ -1,11 +1,11 @@
 startup
-build --cxxopt=-std=c++2b
+build --cxxopt=-std=c++17
 build --noincompatible_sandbox_hermetic_tmp
 build --incompatible_enable_cc_toolchain_resolution
 build --cxxopt=-Isrc
 build --registry=https://raw.githubusercontent.com/NzSN/bazel-central-registry/main/
 
-build:debug --cxxopt=-std=c++2b
+build:debug --cxxopt=-std=c++17
 build:debug --strip=never
 build:debug --noincompatible_sandbox_hermetic_tmp
 build:debug --copt -fsanitize=address

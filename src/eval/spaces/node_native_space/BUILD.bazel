@@ -5,7 +5,7 @@ node_binary(
     srcs = ["hello.cc",
             "codegen.h",
             "node_native_space.h"],
-    copts = ["-std=c++20", "-xc++"],
+    copts = ["-std=c++20", "-fconcepts"],
     include_dirs = ["./src"],
     node_modules = "//:node_modules",
     visibility = ["//visibility:public"]

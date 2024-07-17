@@ -1,6 +1,9 @@
 #define NAPI_DISABLE_CPP_EXCEPTIONS
 #include <napi.h>
 
+template<int i>
+concept Positive = i > 0;
+
 Napi::Value _Sort(const Napi::CallbackInfo& info) {
 
   return info.Env().Undefined();
