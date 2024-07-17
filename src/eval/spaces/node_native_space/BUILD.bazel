@@ -4,8 +4,9 @@ node_binary(
     name = "hello",
     srcs = ["hello.cc",
             "codegen.h",
-            "node_native_space.h"],
-    copts = ["-std=c++20", "-fconcepts"],
+            "node_native_space.h",
+            "//src/eval/basis:basis-srcs",
+            "//src/eval/basis/sort:sort-srcs"],
     include_dirs = ["./src"],
     node_modules = "//:node_modules",
     visibility = ["//visibility:public"]

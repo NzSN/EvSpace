@@ -11,6 +11,10 @@ namespace EVAL {
 namespace BASIS {
 namespace SORT {
 
+template<typename T>
+struct SortBasis : Basis {
+  virtual void operator()(T*, size_t) {}
+};
 
 } // SORT
 } // BASIS

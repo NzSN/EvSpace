@@ -5,12 +5,10 @@
 
 namespace EVSPACE::EVAL::BASIS::SORT {
 
-template<typename T>
-using Sort = BasisImpl<InsertionSort<T>, void(T*, size_t)>;
 
 RC_GTEST_PROP(Tester, BasisSpec, ()) {
   InsertionSort<double> sort;
-  Sort<double> *g_sort = &sort;
+  SortBasis<double> *g_sort = &sort;
 
   std::vector<double> vec { 5, 4, 3, 2, 1, 0 };
 

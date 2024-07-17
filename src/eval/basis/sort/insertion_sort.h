@@ -13,9 +13,8 @@ namespace BASIS {
 namespace SORT {
 
 template<typename T>
-struct InsertionSort : Basis<InsertionSort<T>,
-                             void(T*, size_t)> {
-  void operator()(T* seq, size_t size) {
+struct InsertionSort : SortBasis<T> {
+  void operator()(T* seq, size_t size) final {
     if (size < 2) return;
 
     for (size_t i = 1; i < size; ++i) {

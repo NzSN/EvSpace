@@ -15,10 +15,7 @@ extern "C" {
  * need be listed here otherwise those Basis
  * is not registered into any non-trivial spaces. */
 #define DECLARED_SORT_BASISES(V)                \
-  V(insertionSort,                              \
-    insertionSignature,                         \
-    insertionParaName,                          \
-    insertionTypes)
+  V(insertionSort, insertionSignature, insertionParaName, insertionTypes)
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             InsertionSort Meta                            //

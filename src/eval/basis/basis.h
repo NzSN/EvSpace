@@ -7,26 +7,7 @@ namespace EVSPACE {
 namespace EVAL {
 namespace BASIS {
 
-
-template<typename T, typename... Overloads>
-struct BasisImpl;
-
-template<typename T, typename R, typename... Args>
-struct BasisImpl<T, R(Args...)> {
-  BasisImpl() {
-    static_assert(std::is_invocable_r<R, T, Args...>());
-  }
-
- 
-  R operator()(Args... args) {
-    return static_cast<T*>(this)->operator()(args...);
-  }
-};
-
-// TODO: Support arbitary Overloads
-template<typename T, typename Overloads>
-struct Basis : BasisImpl<T, Overloads> {};
-
+struct Basis {};
 
 } // BASIS
 } // EVAL
