@@ -15,7 +15,10 @@ extern "C" {
  * need be listed here otherwise those Basis
  * is not registered into any non-trivial spaces. */
 #define DECLARED_SORT_BASISES(V)                \
-  V(insertionSort, insertionSignature, insertionParaName, insertionTypes)
+  V(insertionSort,                              \
+    insertionSignature,                         \
+    insertionParaName,                          \
+    insertionTypes)
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             InsertionSort Meta                            //
@@ -25,6 +28,6 @@ extern "C" {
 #define insertionParaName(V)                    \
   V(seq, size)
 #define insertionTypes(V)                       \
-  V(void, double*, size_t)
+  V(insertionSort, void, double*, size_t)
 
 #endif /* EVSPACE_EVAL_BASIS_SORT_SORTH_H_ */
