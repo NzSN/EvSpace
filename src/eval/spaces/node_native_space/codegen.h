@@ -21,32 +21,38 @@ template<typename T>
 struct type_identity { using type = T; };
 
 template<typename T>
-struct NativeReduction;
+struct MAPPING_TO_NATIVE;
 
-#define REDUCTION_TYPED_ARRAY_LIST(V)                     \
+#define TYPED_ARRAY_MAPPING_LIST(V)                     \
   /* From      TO                  Runtime check value */ \
   V(double*  , Napi::Float64Array, napi_float64_array)    \
   V(float*   , Napi::Float32Array, napi_float32_array)    \
   V(uint32_t*, Napi::Uint32Array , napi_uint32_array)     \
   V(int32_t* , Napi::Int32Array  , napi_int32_array)
 
-#define REDUCTION_TO_NATIVE_PRIMITIVE_TYPE_LIST(V) \
-  /*From    To            Runtime check */         \
-  V(double, Napi::Number, IsNumber)                \
-  V(size_t, Napi::Number, IsNumber)                \
-  V(std::string, Napi::String, IsString)
+#define PRIMITIVE_TYPE_MAPPING_LIST(V)          \
+  /*From    To            Runtime check */      \
+  V(double      , Napi::Number, IsNumber)       \
+  V(size_t      , Napi::Number, IsNumber)       \
+  V(std::string , Napi::String, IsString)       \
+  V(float       , Napi::Number, IsNumber)       \
+  V(uint32_t    , Napi::Number, IsNumber)       \
+  V(int32_t     , Napi::Number, IsNumber)
+
+#define TYPE_MAPPING_LIST(V)                    \
+  TYPED_ARRAY_MAPPING_LIST(V)                   \
+  PRIMITIVE_TYPE_MAPPING_LIST(V)
 
 #define TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(V)  \
   /* FROM TO */                                 \
   V(Napi::Float64Array, size_t)                 \
   V(Napi::Float32Array, size_t)                 \
   V(Napi::Uint32Array, size_t)                  \
-  V(Napi::Int32Array, size_t)
+  V(Napi::Int32Array, size_t)                   \
 
-
-#define DECLARE_REDUCTION(C_TYPE, N_TYPE, SUBTYPE)       \
+#define DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TO_NATIVE(C_TYPE, N_TYPE, SUBTYPE)       \
   template<>                                             \
-  struct NativeReduction<C_TYPE> {                       \
+  struct MAPPING_TO_NATIVE<C_TYPE> {                       \
     using type = N_TYPE;                                 \
     static bool check(const Napi::Value& value) {        \
       return value.IsTypedArray() &&                     \
@@ -55,31 +61,34 @@ struct NativeReduction;
     }                                                    \
   };
 
-REDUCTION_TYPED_ARRAY_LIST(DECLARE_REDUCTION);
-#undef DECLARE_REDUCTION
+TYPED_ARRAY_MAPPING_LIST(DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TO_NATIVE);
+#undef DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE
 
-#define DECLARE_PRIMITIVE_REDUCTION_TO_NATIVE(C_TYPE, N_TYPE, CHECK) \
+#define DECLARE_PRIMITIVE_MAPPING_FROM_C_TO_NATIVE(C_TYPE, N_TYPE, CHECK) \
   template<>                                                         \
-  struct NativeReduction<C_TYPE> {                                   \
+  struct MAPPING_TO_NATIVE<C_TYPE> {                                   \
     using type = N_TYPE;                                             \
     static bool check(const Napi::Value& value) {                    \
       return value.CHECK();                                          \
     }                                                                \
   };
-REDUCTION_TO_NATIVE_PRIMITIVE_TYPE_LIST(DECLARE_PRIMITIVE_REDUCTION_TO_NATIVE)
-#undef DECLARE_PRIMITIVE_REDUCTION_TO_NATIVE
+PRIMITIVE_TYPE_MAPPING_LIST(DECLARE_PRIMITIVE_MAPPING_FROM_C_TO_NATIVE)
+#undef DECLARE_PRIMITIVE_MAPPING_FROM_C_TO_NATIVE
 
 template<typename T>
-struct SizeTypeReduction {
+struct SizeTypeMapping {
   using type = void;
 };
-#define DECLARE_REDUCTION_FROM_NATIVE_TO_CTYPE(NT, CT) \
+#define DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE(NT, CT) \
   template<>                                           \
-  struct SizeTypeReduction<NT> {                          \
+  struct SizeTypeMapping<NT> {                          \
     using type = CT;                                   \
   };
 
-TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(DECLARE_REDUCTION_FROM_NATIVE_TO_CTYPE);
+TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE);
+#undef DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE
+
+#define DECLARE_
 
 template<typename... Ts>
 struct Count {
@@ -129,7 +138,7 @@ template<template<typename,typename> class R, typename O, typename... Ts>
 using Reduce_t = typename Reduce<R, O, Ts...>::type;
 template<template<typename,typename> class R, typename O, typename T, typename... Ts>
 struct Reduce<R, O, T, Ts...> {
-  using type = Reduce_t<R, R<O, typename NativeReduction<T>::type>, Ts...>;
+  using type = Reduce_t<R, R<O, typename MAPPING_TO_NATIVE<T>::type>, Ts...>;
 };
 template<template<typename,typename> class R, typename O, typename T, typename U, typename... Ts>
 struct Reduce<R, O, T*, U, Ts...> {
@@ -143,12 +152,12 @@ struct Reduce<R, O, T*, U, Ts...> {
                 "of pointer must at pos next to the pointer");
 
   // U is ignored due to such message are passed by Napi::TypeArray<T>.
-  using type = Reduce_t<R, R<O, typename NativeReduction<T*>::type>, Ts...>;
+  using type = Reduce_t<R, R<O, typename MAPPING_TO_NATIVE<T*>::type>, Ts...>;
 };
 
 
 template<typename... Ts>
-struct CollectTypes { using type = std::tuple<Ts...>; };
+struct CollectTypes;
 template<typename... Ts, typename T>
 struct CollectTypes<CollectTypes<Ts...>, T> {
   using type = std::tuple<Ts..., T>;
@@ -173,9 +182,6 @@ AsNatives(const Napi::CallbackInfo& info) {
   using inferNativeType = typename Reduce_t<
     CollectTypes, CollectTypes<>, Ts...>::type;
 
-  static_assert(std::is_same_v<inferNativeType,
-                std::tuple<Napi::TypedArrayOf<double>>>);
-
   if (info.Length() != std::tuple_size_v<inferNativeType>) {
     return std::nullopt;
   }
@@ -191,7 +197,10 @@ struct ArgIDX {};
 template<typename T, typename U>
 struct DeclareArg;
 template<typename T, size_t I>
-struct DeclareArg<T, ArgIDX<I>> {};
+struct DeclareArg<T, ArgIDX<I>> {
+  using type = T;
+  constexpr static size_t index = I;
+};
 
 template<size_t pos, typename... Ts>
 struct Declaring;
@@ -209,7 +218,7 @@ struct Declaring<pos, std::tuple<Os...>, Tlist<NTs...>, T*, U, Ts...> {
   // Must to gurantee that Napi-Type inference from T* match the type
   // we need to extract information out.
   using TheNodeType = typename GetTlist<pos,Tlist<NTs...>>::type;
-  using InferType = typename NativeReduction<T*>::type;
+  using InferType = typename MAPPING_TO_NATIVE<T*>::type;
   static_assert(std::is_same_v<TheNodeType, InferType>);
   static_assert(std::is_same_v<U, size_t>);
 
@@ -228,7 +237,7 @@ struct Declaring<pos, std::tuple<Os...>, Tlist<NTs...>, T, Ts...> {
   // Must to gurantee that Napi-Type inference from T* match the type
   // we need to extract information out.
   using TheNodeType = typename GetTlist<pos,Tlist<NTs...>>::type;
-  using InferType = typename NativeReduction<T>::type;
+  using InferType = typename MAPPING_TO_NATIVE<T>::type;
   static_assert(std::is_same_v<TheNodeType, InferType>);
 
   using type = typename Declaring<
@@ -270,16 +279,16 @@ NATIVE_TRANSLATION_LIST(DECLARE_TRANSLATOR)
 #undef DECLARE_TRANSLATOR
 
 template<typename... Ts>
-struct Evaluator;
-template<typename FN, typename... Args, typename... Ts>
-struct Evaluator<FN, std::tuple<Args...>, std::tuple<Ts...>> {
+struct ArgExtracter;
+template<typename... Ts>
+struct ArgExtracter<std::tuple<Ts...>> {
   template<typename Arg>
   static auto argTrans(std::tuple<Ts...>& t) {
     using trait = DeclareArg_Trait<Arg>;
     using ArgType = typename trait::type;
     using SelectedNativeType = typename GetTlist<trait::pos, Tlist<Ts...>>::type;
-    using NativeReductT = typename NativeReduction<ArgType>::type;
-    using SizeType = typename SizeTypeReduction<SelectedNativeType>::type;
+    using NativeReductT = typename MAPPING_TO_NATIVE<ArgType>::type;
+    using SizeType = typename SizeTypeMapping<SelectedNativeType>::type;
 
     static_assert(trait::pos < Count<Ts...>::count, "");
     static_assert(std::is_same_v<NativeReductT, SelectedNativeType> ||
@@ -291,9 +300,35 @@ struct Evaluator<FN, std::tuple<Args...>, std::tuple<Ts...>> {
       SelectedNativeType,
       typename trait::type>::trans(std::get<trait::pos>(t));
   }
+};
 
-  static auto eval(FN fn, std::tuple<Ts...>& t) {
-    return fn(argTrans<Args>(t)...);
+template<typename FN, typename... Args>
+struct AsNodeExpression;
+template<typename... Args, typename... ExtractInfos, typename... Ts>
+struct AsNodeExpression<void(*)(Args...),
+                        std::tuple<ExtractInfos...>,
+                        std::tuple<Ts...>> {
+
+  static_assert((std::is_same_v<Args, typename ExtractInfos::type> && ...));
+
+  static auto eval(void(*f)(Args...),
+                   std::tuple<Ts...>& t,
+                   const Napi::CallbackInfo& info) {
+    f(ArgExtracter<std::tuple<Ts...>>::template argTrans<ExtractInfos>(t)...);
+    return info.Env().Undefined();
+  }
+};
+template<typename R, typename... Args, typename... ExtractInfos, typename... Ts>
+struct AsNodeExpression<R(*)(Args...),
+                        std::tuple<ExtractInfos...>,
+                        std::tuple<Ts...>> {
+
+  static_assert((std::is_same_v<Args, typename ExtractInfos::type> && ...));
+
+  static auto eval(R(*f)(Args...),
+                   std::tuple<Ts...>& t,
+                   const Napi::CallbackInfo& info) {
+    return f(ArgExtracter<std::tuple<Ts...>>::template argTrans<ExtractInfos>(t)...);
   }
 };
 
@@ -301,18 +336,19 @@ template<typename FN, typename... Ts>
 struct EvalFlat;
 template<typename FN, typename... FN_ARGs, typename... Ts>
 struct EvalFlat<FN, std::tuple<FN_ARGs...>, std::tuple<Ts...>> {
-  static auto eval(FN fn, std::tuple<Ts...>& t) {
+  static auto eval(FN fn, std::tuple<Ts...>& t,
+                   const Napi::CallbackInfo& info) {
     using ArgInfos = typename Declaring<
       0, Tlist<FN_ARGs...>, Tlist<Ts...>>::type;
 
-    return Evaluator<FN, ArgInfos, std::tuple<Ts...>>::eval(fn, t);
+    return AsNodeExpression<FN, ArgInfos, std::tuple<Ts...>>::eval(fn, t, info);
   }
 };
 
 template<typename FN, typename... Ts>
-auto Eval(FN fn, NodeTypes<Ts...> t) {
+auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
   static_assert(std::is_invocable_v<FN, Ts...>);
-  return EvalFlat<FN, std::tuple<Ts...>, NodeTypes<Ts...>>::eval(fn, t);
+  return EvalFlat<FN, std::tuple<Ts...>, NodeTypes<Ts...>>::eval(fn, t, info);
 }
 
 #define NUM_OF_PARAM(_1, _2, _3, _4, _5, _NAME, ...) _NAME
@@ -336,7 +372,7 @@ auto Eval(FN fn, NodeTypes<Ts...> t) {
 
 #define EVAL(BASIS, R, ...) \
   return CODEGEN::Eval<R(*)(__VA_ARGS__), __VA_ARGS__>( \
-    BASIS, NATIVE_TUPLE_RECEIVER.value())
+    BASIS, NATIVE_TUPLE_RECEIVER.value(), info)
 
 #define NODE_NATIVE_WRAPPER_PARAM_TRANS(        \
   DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE)     \
@@ -352,6 +388,15 @@ auto Eval(FN fn, NodeTypes<Ts...> t) {
     NODE_NATIVE_WRAPPER_PARAM_TRANS(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE); \
     NODE_NATIVE_WRAPPER_EVAL(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE); \
   }
+
+#define REGISTERS(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE) \
+  exports[#DECLARE] = Napi::Function::New(env, _##DECLARE);
+#define SPAWN_API_REGISTER_BLOCK() \
+  static Napi::Object Init(Napi::Env env, Napi::Object exports) {       \
+    DECLARED_BASISES(REGISTERS);                                        \
+    return exports;                                                     \
+  }                                                                     \
+  NODE_API_MODULE(NODE_GYP_MODULE_NAME, Init);
 
 
 } // CODGEN
