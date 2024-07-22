@@ -4,8 +4,9 @@ import * as native from "../src/eval/spaces/node_native_space/hello";
 test("Napi Version", () => {
     expect(native != undefined).toBeTruthy();
 
-    let size = 12
-    let poly = new Float64Array(size);
+    let size = 12;
+    let buffer = new SharedArrayBuffer(size * 8);
+    let poly = new Float64Array(buffer);
     for (let i = 0; i < size; ++i) {
         poly[i] = size - i;
     }
