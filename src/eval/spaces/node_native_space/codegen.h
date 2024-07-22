@@ -134,9 +134,7 @@ struct GetTlist<idx, Tlist<Ts...>> {
 };
 
 template<typename R, typename... Ts>
-struct Reduce {
-  using type = R;
-};
+struct Reduce { using type = R; };
 template<template<typename...> class R, typename... Os, typename T, typename... Ts>
 struct Reduce<R<Os...>, T, Ts...> {
   using type = typename Reduce<R<Os..., typename MAPPING_TO_NATIVE<T>::type>, Ts...>::type;
