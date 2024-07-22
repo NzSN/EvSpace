@@ -10,9 +10,11 @@ test("Napi Version", () => {
         poly[i] = size - i;
     }
 
-    console.log(poly);
     native.insertionSort(poly);
-    console.log(poly);
+
+    for (let i = 1; i < size; ++i) {
+        expect(poly[i-1] < poly[i]).toBeTruthy();
+    }
 })
 
 test("WASM Version", async () => {
