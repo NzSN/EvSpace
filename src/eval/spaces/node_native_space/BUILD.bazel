@@ -3,7 +3,7 @@ load("@node_native_rules//:natives/node_binary.bzl", "node_binary")
 node_binary(
     name = "hello",
     srcs = ["hello.cc",
-            "codegen.h",
+            "space_generator.h",
             "node_native_space.h",
             "//src/eval/basis:basis-srcs",
             "//src/eval/basis/sort:sort-srcs"],

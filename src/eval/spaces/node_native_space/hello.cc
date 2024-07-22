@@ -1,4 +1,3 @@
-#include "eval/spaces/node_native_space/codegen.h"
 #define NAPI_DISABLE_CPP_EXCEPTIONS
 #include <napi.h>
 #include "eval/basis/basis_declarations.h"

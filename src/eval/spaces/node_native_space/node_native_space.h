@@ -1,7 +1,7 @@
 #ifndef EVSPACE_EVAL_SPACES_NODE_NATIVE_SPACE_H_
 #define EVSPACE_EVAL_SPACES_NODE_NATIVE_SPACE_H_
 
-#include "codegen.h"
+#include "space_generator.h"
 
 namespace EVSPACE {
 namespace EVAL {
