@@ -101,15 +101,21 @@ struct Count<T, Ts...> {
 
 
 template<typename... Ts>
-struct Tlist;
+struct Tlist {
+  using type = std::tuple<Ts...>;
+  using reverse = Tlist<>;
+};
 template<typename T, typename... Ts>
 struct Tlist<T, Tlist<Ts...>> {
   using type = std::tuple<T, Ts...>;
+  using reverse = typename Tlist<typename Tlist<Ts...>::reverse, T>::type;
 };
 template<typename T, typename... Ts>
 struct Tlist<Tlist<Ts...>, T> {
   using type = std::tuple<Ts..., T>;
+  using reverse = typename Tlist<T, typename Tlist<Ts...>::reverse>::type;
 };
+
 
 template<size_t idx, typename... Ts>
 struct TAtPos;
@@ -155,14 +161,6 @@ struct Reduce<R, O, T*, U, Ts...> {
   using type = Reduce_t<R, R<O, typename MAPPING_TO_NATIVE<T*>::type>, Ts...>;
 };
 
-
-template<typename... Ts>
-struct CollectTypes;
-template<typename... Ts, typename T>
-struct CollectTypes<CollectTypes<Ts...>, T> {
-  using type = std::tuple<Ts..., T>;
-};
-
 template<typename... Ts>
 struct InfoProc;
 template<typename... Ts>
@@ -175,12 +173,12 @@ struct InfoProc<std::tuple<Ts...>> {
 };
 
 template<typename... Ts>
-using NodeTypes = typename Reduce_t<CollectTypes, CollectTypes<>, Ts...>::type;
+using NodeTypes = typename Reduce_t<Tlist, Tlist<>, Ts...>::type;
 template<typename... Ts>
 std::optional<NodeTypes<Ts...>>
 AsNatives(const Napi::CallbackInfo& info) {
   using inferNativeType = typename Reduce_t<
-    CollectTypes, CollectTypes<>, Ts...>::type;
+    Tlist, Tlist<>, Ts...>::type;
 
   if (info.Length() != std::tuple_size_v<inferNativeType>) {
     return std::nullopt;
