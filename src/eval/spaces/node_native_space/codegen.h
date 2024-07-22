@@ -102,25 +102,21 @@ struct Count<T, Ts...> {
 
 template<typename... Ts>
 struct Tlist {
-  using type = std::tuple<Ts...>;
-  using reverse = Tlist<>;
+  using type = std::tuple<>;
 };
 template<typename T, typename... Ts>
 struct Tlist<T, Tlist<Ts...>> {
   using type = std::tuple<T, Ts...>;
-  using reverse = typename Tlist<typename Tlist<Ts...>::reverse, T>::type;
 };
 template<typename T, typename... Ts>
 struct Tlist<Tlist<Ts...>, T> {
   using type = std::tuple<Ts..., T>;
-  using reverse = typename Tlist<T, typename Tlist<Ts...>::reverse>::type;
 };
-
 
 template<size_t idx, typename... Ts>
 struct TAtPos;
-template<typename T>
-struct TAtPos<0, T> {
+template<typename T, typename... Ts>
+struct TAtPos<0, T, Ts...> {
   using type = T;
 };
 template<size_t idx, typename T, typename... Ts>
@@ -137,17 +133,16 @@ struct GetTlist<idx, Tlist<Ts...>> {
   using type = typename TAtPos<idx, Ts...>::type;
 };
 
-
-template<template<typename,typename> class R, typename O, typename... Ts>
-struct Reduce : type_identity<O> {};
-template<template<typename,typename> class R, typename O, typename... Ts>
-using Reduce_t = typename Reduce<R, O, Ts...>::type;
-template<template<typename,typename> class R, typename O, typename T, typename... Ts>
-struct Reduce<R, O, T, Ts...> {
-  using type = Reduce_t<R, R<O, typename MAPPING_TO_NATIVE<T>::type>, Ts...>;
+template<typename R, typename... Ts>
+struct Reduce {
+  using type = R;
 };
-template<template<typename,typename> class R, typename O, typename T, typename U, typename... Ts>
-struct Reduce<R, O, T*, U, Ts...> {
+template<template<typename...> class R, typename... Os, typename T, typename... Ts>
+struct Reduce<R<Os...>, T, Ts...> {
+  using type = typename Reduce<R<Os..., typename MAPPING_TO_NATIVE<T>::type>, Ts...>::type;
+};
+template<template<typename...> class R, typename... Os, typename T, typename U, typename... Ts>
+struct Reduce<R<Os...>, T*, U, Ts...> {
   // Declaration Layer Interface must declare parameter to indicate
   // valid range of a pointer at the pos next to where pointer parameter
   // is declared. Other wise treat as not-well form.
@@ -156,9 +151,8 @@ struct Reduce<R, O, T*, U, Ts...> {
   static_assert(std::is_same_v<U, size_t>,
                 "Parameter to indicate valid range in Memory "
                 "of pointer must at pos next to the pointer");
-
   // U is ignored due to such message are passed by Napi::TypeArray<T>.
-  using type = Reduce_t<R, R<O, typename MAPPING_TO_NATIVE<T*>::type>, Ts...>;
+  using type = typename Reduce<R<Os..., typename MAPPING_TO_NATIVE<T*>::type>, Ts...>::type;
 };
 
 template<typename... Ts>
@@ -173,12 +167,12 @@ struct InfoProc<std::tuple<Ts...>> {
 };
 
 template<typename... Ts>
-using NodeTypes = typename Reduce_t<Tlist, Tlist<>, Ts...>::type;
+using NodeTypes = typename Reduce<std::tuple<>, Ts...>::type;
 template<typename... Ts>
 std::optional<NodeTypes<Ts...>>
 AsNatives(const Napi::CallbackInfo& info) {
-  using inferNativeType = typename Reduce_t<
-    Tlist, Tlist<>, Ts...>::type;
+  using inferNativeType = typename Reduce<
+    std::tuple<>, Ts...>::type;
 
   if (info.Length() != std::tuple_size_v<inferNativeType>) {
     return std::nullopt;
@@ -226,12 +220,12 @@ struct Declaring<pos, std::tuple<Os...>, Tlist<NTs...>, T*, U, Ts...> {
       Os...,
       DeclareArg<T*,ArgIDX<pos>>,
       DeclareArg<U ,ArgIDX<pos>>>,
-    Tlist<NTs...>, Ts...>
+    Tlist<NTs...>,
+    Ts...>
     ::type;
 };
 template<size_t pos, typename... Os, typename T, typename... Ts, typename... NTs>
 struct Declaring<pos, std::tuple<Os...>, Tlist<NTs...>, T, Ts...> {
-  static_assert(false);
   // Must to gurantee that Napi-Type inference from T* match the type
   // we need to extract information out.
   using TheNodeType = typename GetTlist<pos,Tlist<NTs...>>::type;
@@ -243,7 +237,8 @@ struct Declaring<pos, std::tuple<Os...>, Tlist<NTs...>, T, Ts...> {
     std::tuple<
       Os...,
       DeclareArg<T,ArgIDX<pos>>>,
-    Tlist<NTs...>, Ts...>
+    Tlist<NTs...>,
+    Ts...>
     ::type;
 };
 
