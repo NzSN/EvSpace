@@ -13,8 +13,6 @@ test("Napi Version", () => {
     console.log(poly);
     native.insertionSort(poly);
     console.log(poly);
-
-
 })
 
 test("WASM Version", async () => {
