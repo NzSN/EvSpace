@@ -255,7 +255,7 @@ struct DeclareArg_Trait<DeclareArg<T, ArgIDX<I>>> {
   /* NativeType,         CType,   Method */      \
   V(Napi::Number       , double , DoubleValue) \
   V(Napi::Float64Array , double*, Data)        \
-  V(Napi::Float64Array , size_t , ElementSize)
+  V(Napi::Float64Array , size_t , ElementLength)
 
 template<typename T, typename U>
 struct NativeTranslator;
