@@ -152,7 +152,8 @@ struct Reduce<R<Os...>, T*, U, Ts...> {
                 "Parameter to indicate valid range in Memory "
                 "of pointer must at pos next to the pointer");
   // U is ignored due to such message are passed by Napi::TypeArray<T>.
-  using type = typename Reduce<R<Os..., typename MAPPING_TO_NATIVE<T*>::type>, Ts...>::type;
+  using NType = typename MAPPING_TO_NATIVE<T*>::type;
+  using type = typename Reduce<R<Os..., NType>, Ts...>::type;
 };
 
 template<typename... Ts>
