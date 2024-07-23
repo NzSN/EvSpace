@@ -1,7 +1,7 @@
 import Module from "../src/eval/spaces/wasm_space/wasm-space-cc/wasm-space.js";
 import * as native from "../src/eval/spaces/node_native_space/hello";
 
-test("Napi Version", () => {
+test("Napi Version", async () => {
     expect(native != undefined).toBeTruthy();
 
     let size = 12;
@@ -33,5 +33,11 @@ test("WASM Version", async () => {
     mod.HEAPF64.set(poly, buf / poly.BYTES_PER_ELEMENT);
 
     mod._insertionSortw(buf, poly.length, 1);
+    const array = new Float64Array(mod.HEAP8.buffer, buf, size);
+
+    for (let i = 1; i < size; ++i) {
+        expect(array[i-1] < array[i]).toBeTruthy();
+    }
+
     mod._free(buf);
 })

@@ -9,7 +9,7 @@
  * among spaces */
 extern "C" {
   void insertionSort(double *seq, size_t size);
-  void trivialSort(double *seq, size_t size, double *seq_2, size_t size_2);
+  void trivialSort(double *seq, size_t size);
 }
 
 /* Those Basis that expected to publish globally
@@ -39,10 +39,10 @@ extern "C" {
 //                              TrivialSort meta                             //
 ///////////////////////////////////////////////////////////////////////////////
 #define trivialSortSignature(V) \
-  V(trivialSort, void, double* seq, size_t size, double* seq1, size_t size1)
+  V(trivialSort, void, double* seq, size_t size)
 #define trivialSortParaName(V) \
-  V(seq, size, seq1, size1)
+  V(seq, size)
 #define trivialSortTypes(V) \
-  V(trivialSort, void, double*, size_t, double*, size_t)
+  V(trivialSort, void, double*, size_t)
 
 #endif /* EVSPACE_EVAL_BASIS_SORT_SORTH_H_ */
