@@ -5,7 +5,6 @@ jest_test(
     name = "test",
     data = ["//:main",
             "basis.test.ts",
-            "babel.config.cjs",
-            "jest.config.cjs"],
+            "babel.config.js"],
     node_modules = "//:node_modules",
 )
