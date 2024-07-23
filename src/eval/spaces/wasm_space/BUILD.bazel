@@ -8,7 +8,7 @@ WASM_OPTS = [
     "-sFETCH=1",
     "-sMODULARIZE=1",
     "-sEXPORT_NAME=Eval",
-    "-sEXPORTED_FUNCTIONS=\"['_malloc', '_free']\""
+    "-sEXPORTED_FUNCTIONS=\"['_malloc', '_free', 'setValue', 'getValue']\""
 ]
 
 cc_binary(
