@@ -9,6 +9,7 @@ build:debug --cxxopt=-std=c++17
 build:debug --strip=never
 build:debug --noincompatible_sandbox_hermetic_tmp
 build:debug --copt -fsanitize=address
+build:debug --copt -fsanitize=undefined
 build:debug --copt -DADDRESS_SANITIZER
 build:debug --copt -O0
 build:debug --copt -g
