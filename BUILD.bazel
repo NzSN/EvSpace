@@ -15,7 +15,12 @@ ts_config(
 
 ts_project(
     name = "main",
-    srcs = ["src/web/index.ts"],
+    srcs = ["src/web/index.ts",
+            "src/web/evaluator.ts",
+            "src/web/evaluator_factory.ts",
+            "src/web/evaluator_native.ts",
+            "src/web/evaluator_wasm.ts",
+            "src/web/platforms.ts",],
     data = [
         "//src/eval/spaces/node_native_space:hello",
         "//src/eval/spaces/wasm_space:wasm-space-cc"

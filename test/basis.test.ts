@@ -32,11 +32,12 @@ test("WASM Version", async () => {
         poly.BYTES_PER_ELEMENT * poly.length);
     mod.HEAPF64.set(poly, buf / poly.BYTES_PER_ELEMENT);
 
-    mod._insertionSortw(buf, poly.length, 1);
+    mod._insertionSortw(buf, poly.length);
     const array = new Float64Array(mod.HEAP8.buffer, buf, size);
+    poly.set(array);
 
     for (let i = 1; i < size; ++i) {
-        expect(array[i-1] < array[i]).toBeTruthy();
+        expect(poly[i-1] < poly[i]).toBeTruthy();
     }
 
     mod._free(buf);

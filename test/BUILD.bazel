@@ -2,9 +2,17 @@
 load("@aspect_rules_jest//jest:defs.bzl", "jest_test")
 
 jest_test(
-    name = "test",
+    name = "basis-unittest",
     data = ["//:main",
             "basis.test.ts",
+            "babel.config.js"],
+    node_modules = "//:node_modules",
+)
+
+jest_test(
+    name = "eval-unittest",
+    data = ["//:main",
+            "eval.test.ts",
             "babel.config.js"],
     node_modules = "//:node_modules",
 )
