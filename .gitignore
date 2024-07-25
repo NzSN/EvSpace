@@ -3,3 +3,4 @@ package-lock.json
 .config
 .clangd
 MODULE.bazel.lock
+bazel-*

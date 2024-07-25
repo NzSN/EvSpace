@@ -9,12 +9,13 @@ build:debug --cxxopt=-std=c++17
 build:debug --strip=never
 build:debug --noincompatible_sandbox_hermetic_tmp
 build:debug --copt -fsanitize=address
+build:debug --copt -fsanitize=undefined
 build:debug --copt -DADDRESS_SANITIZER
 build:debug --copt -O0
 build:debug --copt -g
 build:debug --copt -fno-omit-frame-pointer
 build:debug --linkopt -fsanitize=address
-build:debug --cxxopt=-fconcepts-diagnostics-depth=10
+#build:debug --cxxopt=-fconcepts-diagnostics-depth=10
 
 # honor the setting of `skipLibCheck` in the tsconfig.json file
 # Bazel 6.4 or greater: 'common' means 'any command that supports this flag'
