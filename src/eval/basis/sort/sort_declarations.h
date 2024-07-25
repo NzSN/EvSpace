@@ -1,20 +1,19 @@
 #include "eval/basis/basis.h"
 #include "insertion_sort.h"
-#include "eval/basis/async_pipe.h"
 
 #ifndef EVSPACE_EVAL_BASIS_SORT_SORTH_H_
 #define EVSPACE_EVAL_BASIS_SORT_SORTH_H_
 
-/* Wrap your basis with a C interface so it's able to
- * be used as seed to generate different functions
- * among spaces */
-extern "C" {
-  void insertionSort(double *seq, size_t size);
+namespace EVSPACE {
+namespace BASIS {
+namespace DECL {
 
-  /* Counting from 0 to N, N is specified by seq[2],
-   * on seq[0] with delay specified by seq[1] */
-  ASYNC_PIPE(void) asyncCount(double *seq, size_t size);
-}
+void insertionSort(double *seq, size_t size);
+
+/* Counting from 0 to N, N is specified by seq[2],
+ * on seq[0] with delay specified by seq[1] */
+void asyncCount(double *seq, size_t size);
+
 
 /* Those Basis that expected to publish globally
  * need be listed here otherwise those Basis
@@ -48,5 +47,11 @@ extern "C" {
   V(seq, size)
 #define asyncCountTypes(V) \
   V(asyncCount, void, double*, size_t)
+
+
+} // DECL
+} // Basis
+} // EVSPACE
+
 
 #endif /* EVSPACE_EVAL_BASIS_SORT_SORTH_H_ */

@@ -362,9 +362,9 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
 #define PARAM_TRANS_IMPL(...)                           \
   SELECT_BY_NUM_OF_PARAM(__VA_ARGS__, N, N, N, N, N, 0)
 
-#define EVAL(BASIS, R, ...) \
+#define EVAL(B, R, ...) \
   return CODEGEN::Eval<R(*)(__VA_ARGS__), __VA_ARGS__>( \
-    BASIS, NATIVE_TUPLE_RECEIVER.value(), info)
+    EVSPACE::BASIS::DECL::B, NATIVE_TUPLE_RECEIVER.value(), info)
 
 #define NODE_NATIVE_WRAPPER_PARAM_TRANS(        \
   DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE)     \

@@ -8,6 +8,10 @@
 
 namespace SORT = EVSPACE::EVAL::BASIS::SORT;
 
+namespace EVSPACE{
+namespace BASIS {
+namespace DECL {
+
 void insertionSort(double *seq, size_t size) {
   SORT::InsertionSort<double>{}(seq,size);
 }
@@ -30,3 +34,8 @@ void asyncCount(double* seq, size_t size) {
   std::thread t0{fn, seq, size};
   t0.detach();
 }
+
+
+} // DECL
+} // BASIS
+} // EVSPACE
