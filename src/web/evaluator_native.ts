@@ -5,6 +5,9 @@ export class NativeEvaluator implements Evaluator {
     insertionSort(nums: Float64Array) {
         basis.insertionSort(nums);
     }
+    asyncCount(nums: Float64Array) {
+        basis.asyncCount(nums);
+    }
 }
 
 export async function CreateEvaluator(): Promise<Evaluator> {

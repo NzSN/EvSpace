@@ -1,6 +1,11 @@
+export enum Platform {
+    AUTO,
+    WASM,
+    NATIVE,
+}
 
 export function is_nodejs() {
-    return !(typeof window === 'undefined');
+    return (typeof window === 'undefined');
 }
 
 export function is_browser() {

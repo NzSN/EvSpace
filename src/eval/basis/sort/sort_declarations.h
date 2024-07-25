@@ -1,5 +1,6 @@
 #include "eval/basis/basis.h"
 #include "insertion_sort.h"
+#include "eval/basis/async_pipe.h"
 
 #ifndef EVSPACE_EVAL_BASIS_SORT_SORTH_H_
 #define EVSPACE_EVAL_BASIS_SORT_SORTH_H_
@@ -8,8 +9,11 @@
  * be used as seed to generate different functions
  * among spaces */
 extern "C" {
-  void insertionSort(double *seq, size_t size);
-  void trivialSort(double *seq, size_t size);
+  ASYNC(void) insertionSort(double *seq, size_t size);
+
+  /* Counting from 0 to N, N is specified by seq[2],
+   * on seq[0] with delay specified by seq[1] */
+  ASYNC(void) asyncCount(double *seq, size_t size);
 }
 
 /* Those Basis that expected to publish globally
@@ -20,10 +24,10 @@ extern "C" {
     insertionSignature,                         \
     insertionParaName,                          \
     insertionTypes)                             \
-  V(trivialSort,                                \
-    trivialSortSignature,                       \
-    trivialSortParaName,                        \
-    trivialSortTypes)
+  V(asyncCount,                                \
+    asyncCountSignature,                       \
+    asyncCountParaName,                        \
+    asyncCountTypes)
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             InsertionSort Meta                            //
@@ -38,11 +42,11 @@ extern "C" {
 ///////////////////////////////////////////////////////////////////////////////
 //                              TrivialSort meta                             //
 ///////////////////////////////////////////////////////////////////////////////
-#define trivialSortSignature(V) \
-  V(trivialSort, void, double* seq, size_t size)
-#define trivialSortParaName(V) \
+#define asyncCountSignature(V) \
+  V(asyncCount, void, double* seq, size_t size)
+#define asyncCountParaName(V) \
   V(seq, size)
-#define trivialSortTypes(V) \
-  V(trivialSort, void, double*, size_t)
+#define asyncCountTypes(V) \
+  V(asyncCount, void, double*, size_t)
 
 #endif /* EVSPACE_EVAL_BASIS_SORT_SORTH_H_ */

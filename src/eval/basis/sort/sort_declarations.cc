@@ -1,3 +1,5 @@
+#include <chrono>
+#include <cmath>
 #include <thread>
 #include <pthread.h>
 
@@ -7,13 +9,24 @@
 namespace SORT = EVSPACE::EVAL::BASIS::SORT;
 
 void insertionSort(double *seq, size_t size) {
-  SORT::InsertionSort<double> sort;
-
-  std::thread t{sort, seq, size};
-  t.join();
-  return;
+  SORT::InsertionSort<double>{}(seq,size);
 }
 
-void trivialSort(double* seq, size_t size) {
-  return;
+void fn(double* seq, size_t size) {
+  if (size < 2) {
+    return;
+  }
+
+  seq[0] = 0;
+  while (true) {
+    if (seq[0] > 60) break;
+    std::this_thread::sleep_for(
+      std::chrono::milliseconds(std::lround(seq[1])));
+    seq[0]++;
+  }
+
+}
+void asyncCount(double* seq, size_t size) {
+  std::thread t0{fn, seq, size};
+  t0.detach();
 }

@@ -1,0 +1,10 @@
+#ifndef EVSPACE_EVAL_BASIS_ASYNC_PIPE_H_
+#define EVSPACE_EVAL_BASIS_ASYNC_PIPE_H_
+
+#define ASYNC(T) T
+
+extern "C" {
+ 
+}
+
+#endif /* EVSPACE_EVAL_BASIS_ASYNC_PIPE_H_ */
