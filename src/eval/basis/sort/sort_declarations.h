@@ -9,11 +9,11 @@
  * be used as seed to generate different functions
  * among spaces */
 extern "C" {
-  ASYNC(void) insertionSort(double *seq, size_t size);
+  void insertionSort(double *seq, size_t size);
 
   /* Counting from 0 to N, N is specified by seq[2],
    * on seq[0] with delay specified by seq[1] */
-  ASYNC(void) asyncCount(double *seq, size_t size);
+  ASYNC_PIPE(void) asyncCount(double *seq, size_t size);
 }
 
 /* Those Basis that expected to publish globally

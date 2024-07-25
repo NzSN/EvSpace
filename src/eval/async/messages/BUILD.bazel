@@ -1,0 +1,17 @@
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+proto_library(
+    name = "counter_proto",
+    srcs = ["counter.proto"],
+    strip_import_prefix = "/src",
+)
+cc_proto_library(
+    name = "counter_cc_proto",
+    deps = [":counter_proto"]
+)
+cc_binary(
+    name = "example_proto",
+    srcs = ["example.cc"],
+    deps = [":counter_cc_proto",
+            "@protobuf"]
+)
