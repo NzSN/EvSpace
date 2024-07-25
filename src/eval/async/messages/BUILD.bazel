@@ -7,7 +7,8 @@ proto_library(
 )
 cc_proto_library(
     name = "counter_cc_proto",
-    deps = [":counter_proto"]
+    deps = [":counter_proto"],
+    visibility = ["//visibility:public"]
 )
 cc_binary(
     name = "example_proto",

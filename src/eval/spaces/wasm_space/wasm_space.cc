@@ -1,3 +1,10 @@
 #include "wasm_space.h"
+#include <emscripten/bind.h>
 
-DECLARED_BASISES(SPAN_WASM_SPACE_FROM_BASIS);
+using namespace emscripten;
+namespace DECL = EVSPACE::BASIS::DECL;
+
+EMSCRIPTEN_BINDINGS(WasmSpace) {
+  function("insertionSort", &DECL::insertionSort, allow_raw_pointers());
+  function("asyncCount", &DECL::asyncCount, allow_raw_pointers());
+}
