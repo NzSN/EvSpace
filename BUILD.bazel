@@ -3,6 +3,8 @@ load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
 load("@bazel_skylib//lib:partial.bzl", "partial")
 load("@aspect_rules_swc//swc:defs.bzl", "swc")
+load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
+
 
 
 npm_link_all_packages(name = "node_modules")
@@ -35,3 +37,17 @@ ts_project(
     visibility = ["__subpackages__"],
 )
 
+refresh_compile_commands(
+    name = "refresh_compile_commands",
+
+    # Specify the targets of interest.
+    # For example, specify a dict of targets and any flags required to build.
+    targets = {
+      "//...": "",
+    },
+    # No need to add flags already in .bazelrc. They're automatically picked up.
+    # If you don't need flags, a list of targets is also okay, as is a single target string.
+    # Wildcard patterns, like //... for everything, *are* allowed here, just like a build.
+      # As are additional targets (+) and subtractions (-), like in bazel query https://docs.bazel.build/versions/main/query.html#expressions
+    # And if you're working on a header-only library, specify a test or binary target that compiles it.
+)
