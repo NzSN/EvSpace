@@ -1,0 +1,11 @@
+filegroup(
+    name = "base-hdrs",
+    srcs = ["traits.h",
+            "assert.h"],
+)
+
+cc_library(
+    name = "base",
+    hdrs = [":base-hdrs"],
+    visibility = ["//visibility:public"],
+)

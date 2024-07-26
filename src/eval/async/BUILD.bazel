@@ -18,11 +18,13 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+
 cc_test(
     name = "async-unittest",
     srcs = [":async-srcs",
             "pipe_unittest.cc"],
     deps = ["//src/eval/async/messages:counter_cc_proto",
             "@com_google_googletest//:gtest_main",
-            "@rapidcheck//:rapidcheck"],
+            "@rapidcheck//:rapidcheck",
+            "//src/base:base"],
 )

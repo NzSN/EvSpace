@@ -1,57 +1,56 @@
 #ifndef EVSPACE_EVAL_ASYNC_PIPE_H_
 #define EVSPACE_EVAL_ASYNC_PIPE_H_
 
-#include <iostream>
+#include <cstdint>
 #include <memory>
-#include <type_traits>
-#include "stddef.h"
+#include <stddef.h>
+#include <optional>
+
+#include "base/assert.h"
+#include "base/traits.h"
 
 #define ASYNCHRONOUS EVSPACE::ASYNC::MessagePipe
 
 namespace EVSPACE {
 namespace ASYNC {
 
-template<typename T, typename F>
-struct has_method {
-  static_assert(std::integral_constant<F, false>::value,
-    "The second parameter of has_method<T,F> must be a function type");
-};
 
-#define HAS_METHOD(T, M, R) \
-  template<typename T, typename R, typename... Args> \
-  struct has_method<T, R(Args...)> {                 \
-    template<typename U>                             \
-    static constexpr auto check(U*) -> typename      \
-      std::is_same<decltype(std::declval<U>().M())>     \
-  };
-
-template<typename T>
-struct is_message {
-private:
-  static constexpr auto check(T*) -> typename
-    std::is_same<decltype(std::declval<T>().ByteSizeLong()), size_t>::type;
-  static constexpr std::false_type check(...);
-
-  typedef decltype(check(0)) type;
-public:
-  static constexpr bool value = type::value;
-};
+struct PipeTester;
+DEFINE_TRAIT_HAS_METHOD(ByteSizeLong);
+DEFINE_TRAIT_HAS_METHOD(SerializeToArray);
+DEFINE_TRAIT_HAS_METHOD(ParseFromArray);
 
 template<typename T,
-         std::enable_if<is_message<T>::value>>
+         typename = std::enable_if<
+           has_method_ByteSizeLong<T,size_t()>::value &&
+           has_method_SerializeToArray<T, bool(void*,size_t)>::value &&
+           has_method_ParseFromArray<T, bool(const void*, size_t)>::value>>
 class MessagePipe {
 public:
-  MessagePipe(T& message, size_t length):
-    pipe_{std::make_unique<uint8_t>(message.ByteSizeLong() * length)},
+  MessagePipe(const T& message, size_t length):
+    pipe_{std::make_unique<uint8_t[]>(message.ByteSizeLong() * length)},
+    head_{pipe_.get()},
+    last_{pipe_.get()},
+    begin_{pipe_.get()},
+    end_{pipe_.get() + message.ByteSizeLong() * length},
     size_{message.ByteSizeLong()},
     length_{length} {}
 
   MessagePipe(const MessagePipe&) = delete;
+  MessagePipe& operator=(MessagePipe&) = delete;
 
   MessagePipe(MessagePipe&& other):
     pipe_{std::move(other.pipe_)},
     size_{other.size_},
     length_{other.length_} {}
+
+  MessagePipe& operator=(MessagePipe&& other) {
+    this->pipe_ = std::move(other.pipe_);
+    this->size_ = other.size_;
+    this->length_ = other.length_;
+
+    return *this;
+  }
 
   size_t size() const {
     return size_;
@@ -65,14 +64,94 @@ public:
     return pipe_.get();
   }
 
+  std::optional<T> read() {
+    if (isEmpty()) {
+      return std::nullopt;
+    }
 
+    T message;
+    message.ParseFromArray(last_, size_);
+    last_ = next(last_);
+
+    return message;
+  }
+
+  bool write(const T& message) {
+    if (isFull()) {
+      return false;
+    }
+
+    message.SerializeToArray(head_, size_);
+
+    head_ = next(head_);
+    return true;
+  }
+
+  bool isEmpty() const {
+    return head_ == last_;
+  }
+
+  bool isFull() const {
+    return length_ == 0 || next(head_) == last_;
+  }
 
 private:
-  std::unique_ptr<uint8_t> pipe_;
+  friend PipeTester;
+
+  uint8_t* next(uint8_t* current) const {
+    ASSERT(current >= begin_ && current < end_,
+           "Invalid address");
+    uint8_t* next_pos = current + size_;
+    if (next_pos >= end_) {
+      return const_cast<uint8_t*>(begin_);
+    }
+    return next_pos;
+  }
+
+  uint8_t* prev(uint8_t* current) const {
+    ASSERT(current >= begin_ && current < end_,
+           "Invalid address");
+    uint8_t* prev_pos = current - size_;
+    if (prev_pos < begin_) {
+      return const_cast<uint8_t*>(end_ - size_);
+    }
+    return prev_pos;
+  }
+
+  std::unique_ptr<uint8_t[]> pipe_;
+  uint8_t* head_;
+  uint8_t* last_;
+
+  const uint8_t* begin_;
+  const uint8_t* end_;
+
   // Size of message in pipe
   size_t size_;
   // Number of messages in pipe
   size_t length_;
+};
+
+template<typename T>
+class BiPipe {
+
+  bool write(const T& message) {
+    return out.write(message);
+  }
+
+  std::optional<T> read() {
+    return in.read();
+  }
+
+  bool readable() const {
+    return !in.isEmpty();
+  }
+  bool writable() const {
+    return !out.isFull();
+  }
+
+private:
+  MessagePipe<T> in;
+  MessagePipe<T> out;
 };
 
 } // ASYNC

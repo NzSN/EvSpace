@@ -66,9 +66,6 @@ EmPipe<T> Communication() {
   Counter counter;
   counter.set_counter(1);
 
-  CounterSetter counterSetter;
-  counterSetter.set_counter(1);
-
   async::MessagePipe<Counter>
     pipe(counter, 1);
 
