@@ -3,6 +3,7 @@ build --cxxopt=-std=c++17
 build --noincompatible_sandbox_hermetic_tmp
 build --incompatible_enable_cc_toolchain_resolution
 build --cxxopt=-Isrc
+build --cxxopt=-pthread
 build --registry=https://raw.githubusercontent.com/NzSN/bazel-central-registry/main/
 
 build:debug --cxxopt=-std=c++17

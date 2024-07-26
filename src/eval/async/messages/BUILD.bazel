@@ -1,9 +1,17 @@
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+
+js_library(
+    name = "counter_proto_js",
+    srcs = ["counter.proto"],
+    visibility = ["//visibility:public"],
+)
 
 proto_library(
     name = "counter_proto",
     srcs = ["counter.proto"],
     strip_import_prefix = "/src",
+    visibility = ["//visibility:public"],
 )
 cc_proto_library(
     name = "counter_cc_proto",

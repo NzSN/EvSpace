@@ -3,3 +3,7 @@ syntax = "proto3";
 message Counter {
   int32 counter = 1;
 }
+
+message CounterSetter {
+  int32 counter = 1;
+}

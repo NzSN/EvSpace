@@ -16,6 +16,7 @@ cc_library(
     srcs = [":basis-srcs",
             "//src/eval/basis/sort:sort-srcs"],
     hdrs = ["basis-headers"],
+    copts = ["-pthread"],
     deps = ["@proxy//:proxy",
             "@protobuf",
             "//src/eval/async:async",],
