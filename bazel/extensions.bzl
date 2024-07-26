@@ -49,6 +49,27 @@ cmake(
     visibility = ["//visibility:public"],
 )
         """)
+    ###########################################################################
+    #                                 refl-cpp                                #
+    ###########################################################################
+    new_git_repository(
+        name = "refl-cpp",
+        remote = "https://github.com/veselink1/refl-cpp.git",
+        branch = "master",
+        build_file_content =
+        """
+filegroup(
+    name = "refl-cpp-srcs",
+    srcs = ["include/refl.hpp"]
+)
+cc_library(
+    name = "refl-cpp",
+    hdrs = [":refl-cpp-srcs"],
+    strip_include_prefix = "include/",
+    visibility = ["//visibility:public"]
+)
+        """
+    )
 
 ext = module_extension(
    implementation = _ext_impl

@@ -45,7 +45,7 @@ use_repo(pnpm, "pnpm")
 # C++ Related
 bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
 evspace_ext = use_extension("@evspace//:bazel/extensions.bzl", "ext")
-use_repo(evspace_ext, "proxy", "rapidcheck")
+use_repo(evspace_ext, "proxy", "rapidcheck", "refl-cpp")
 
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor

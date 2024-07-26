@@ -12,6 +12,4 @@ extern "C" {
   };
 }
 
-
-
 #endif /* EVSPACE_EVAL_ASYNC_PIPE_H_ */

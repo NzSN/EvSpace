@@ -1,0 +1,19 @@
+filegroup(
+    name = "async-srcs",
+    srcs = ["pipe.h"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "async-hdrs",
+    srcs = ["pipe.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "async",
+    srcs = [":async-srcs"],
+    hdrs = [":async-hdrs"],
+    deps = ["//src/eval/async/messages:counter_cc_proto"],
+    visibility = ["//visibility:public"],
+)

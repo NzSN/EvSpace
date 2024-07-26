@@ -6,7 +6,8 @@ node_binary(
             "space_generator.h",
             "node_native_space.h",
             "//src/eval/basis:basis-srcs",
-            "//src/eval/basis/sort:sort-srcs"],
+            "//src/eval/basis/sort:sort-srcs",
+            "//src/eval/async:async-srcs"],
     include_dirs = ["./src"],
     node_modules = "//:node_modules",
     visibility = ["//visibility:public"]

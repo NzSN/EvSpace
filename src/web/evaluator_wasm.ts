@@ -13,7 +13,7 @@ export class WasmEvaluator implements Evaluator {
             nums.BYTES_PER_ELEMENT * nums.length);
         this._mod.HEAPF64.set(nums, buf / nums.BYTES_PER_ELEMENT);
 
-        this._mod.insertionSort(buf, nums.length);
+        this._mod._insertionSortw(buf, nums.length);
         const array = new Float64Array(this._mod.HEAP8.buffer, buf, nums.length);
 
         nums.set(array);
@@ -24,7 +24,7 @@ export class WasmEvaluator implements Evaluator {
             nums.BYTES_PER_ELEMENT * nums.length);
         this._mod.HEAPF64.set(nums, buf / nums.BYTES_PER_ELEMENT);
 
-        this._mod.asyncCount(buf, nums.length);
+        this._mod._asyncCountw(buf, nums.length);
         const array = new Float64Array(
             this._mod.HEAP8.buffer, buf, nums.length);
 

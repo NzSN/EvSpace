@@ -18,6 +18,6 @@ cc_library(
     hdrs = ["basis-headers"],
     deps = ["@proxy//:proxy",
             "@protobuf",
-            "//src/eval/async/messages:counter_cc_proto",],
+            "//src/eval/async:async",],
     visibility = ["//visibility:public"],
 )
