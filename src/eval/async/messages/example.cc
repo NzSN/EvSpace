@@ -8,7 +8,7 @@ int main() {
   std::cout << "Counter: " << counter.counter() << std::endl;
   std::cout << "ByteSize:" << counter.ByteSizeLong() << std::endl;
 
-  uint8_t* bytes = new uint8_t(counter.ByteSizeLong());
+  char* bytes = new char(counter.ByteSizeLong());
   counter.SerializeToArray(bytes, counter.ByteSizeLong());
 
 
