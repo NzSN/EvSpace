@@ -21,6 +21,12 @@ build:debug --copt -fno-omit-frame-pointer
 
 build:thread_safety --repo_env=CC=clang++-15
 build:thread_safety --cxxopt -Wthread-safety
+build:thread_safety --action_env=CXXFLAGS=-stdlib=libc++
+build:thread_safety --action_env=LDFLAGS=-stdlib=libc++
+build:thread_safety --action_env=BAZEL_CXXOPTS=-stdlib=libc++
+build:thread_safety --action_env=BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
+build:thread_safety --define force_libcpp=enabled
+build:thread_safety --action_env=BAZEL_LINKOPTS=-lc++:-lm
 
 # honor the setting of `skipLibCheck` in the tsconfig.json file
 # Bazel 6.4 or greater: 'common' means 'any command that supports this flag'
