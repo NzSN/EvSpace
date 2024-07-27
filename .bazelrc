@@ -19,14 +19,23 @@ build:debug --copt -O0
 build:debug --copt -g
 build:debug --copt -fno-omit-frame-pointer
 
-build:thread_safety --repo_env=CC=clang++-15
-build:thread_safety --cxxopt -Wthread-safety
-build:thread_safety --action_env=CXXFLAGS=-stdlib=libc++
-build:thread_safety --action_env=LDFLAGS=-stdlib=libc++
-build:thread_safety --action_env=BAZEL_CXXOPTS=-stdlib=libc++
-build:thread_safety --action_env=BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
-build:thread_safety --define force_libcpp=enabled
-build:thread_safety --action_env=BAZEL_LINKOPTS=-lc++:-lm
+build:clang --action_env=BAZEL_COMPILER=clang
+build:clang --linkopt=-fuse-ld=lld
+build:clang --action_env=CC=clang --host_action_env=CC=clang
+build:clang --action_env=CXX=clang++ --host_action_env=CXX=clang++
+
+build:libc++ --config=clang
+build:libc++ --action_env=CXXFLAGS=-stdlib=libc++
+build:libc++ --action_env=LDFLAGS=-stdlib=libc++
+build:libc++ --action_env=BAZEL_CXXOPTS=-stdlib=libc++
+build:libc++ --action_env=BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
+build:libc++ --action_env=BAZEL_LINKOPTS=-lm:-pthread
+build:libc++ --define force_libcpp=enabled
+build:clang-libc++ --config=libc++
+
+build:thread_safety --config=libc++
+build:thread_safety --cxxopt=-Wthread-safety
+build:thread_safety --copt=-Wthread-safety
 
 # honor the setting of `skipLibCheck` in the tsconfig.json file
 # Bazel 6.4 or greater: 'common' means 'any command that supports this flag'
