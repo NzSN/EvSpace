@@ -1,33 +1,26 @@
 startup
 
-build:release --cxxopt=-std=c++17
-build:release --noincompatible_sandbox_hermetic_tmp
-build:release --incompatible_enable_cc_toolchain_resolution
-build:release --cxxopt=-Isrc
-build:release --cxxopt=-pthread
-build:release --registry=https://raw.githubusercontent.com/NzSN/bazel-central-registry/main/
+build:release --cxxopt=-O3
 
 build --cxxopt=-std=c++17
 build --noincompatible_sandbox_hermetic_tmp
 build --incompatible_enable_cc_toolchain_resolution
 build --cxxopt=-Isrc
 build --cxxopt=-pthread
-build --copt -fsanitize=undefined
-build --linkopt -fsanitize=undefined
 build --registry=https://raw.githubusercontent.com/NzSN/bazel-central-registry/main/
 
-build:debug --cxxopt=-std=c++17
 build:debug --strip=never
-build:debug --noincompatible_sandbox_hermetic_tmp
 build:debug --copt -fsanitize=address
-build:debug --copt -fsanitize=undefined
+build:debug --linkopt -fsanitize=address
+build:debug --cxxopt=-fsanitize=undefined
+build:debug --linkopt=-fsanitize=undefined
 build:debug --copt -DADDRESS_SANITIZER
 build:debug --copt -O0
 build:debug --copt -g
 build:debug --copt -fno-omit-frame-pointer
-build:debug --linkopt -fsanitize=address
-build:debug --linkopt -fsanitize=undefined
-#build:debug --cxxopt=-fconcepts-diagnostics-depth=10
+
+build:thread_safety --repo_env=CC=clang++-15
+build:thread_safety --cxxopt -Wthread-safety
 
 # honor the setting of `skipLibCheck` in the tsconfig.json file
 # Bazel 6.4 or greater: 'common' means 'any command that supports this flag'
