@@ -10,7 +10,7 @@ build --cxxopt=-pthread
 build --registry=https://raw.githubusercontent.com/NzSN/bazel-central-registry/main/
 
 build:debug --strip=never
-build:debug --copt -fsanitize=address
+build:debug --cxxopt -fsanitize=address
 build:debug --linkopt -fsanitize=address
 build:debug --cxxopt=-fsanitize=undefined
 build:debug --linkopt=-fsanitize=undefined
@@ -32,10 +32,12 @@ build:libc++ --action_env=BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
 build:libc++ --action_env=BAZEL_LINKOPTS=-lm:-pthread
 build:libc++ --define force_libcpp=enabled
 
-build:thread_safety --config=libc++
-build:thread_safety --cxxopt=-Wthread-safety
-build:thread_safety --copt=-Wthread-safety
-build:thread_safety --cxxopt=-D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
+build:thread_safety --config libc++
+build:thread_safety --cxxopt -fsanitize=address
+build:thread_safety --linkopt -fsanitize=address
+build:thread_safety --cxxopt -Wthread-safety
+build:thread_safety --copt -Wthread-safety
+build:thread_safety --cxxopt -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
 
 # honor the setting of `skipLibCheck` in the tsconfig.json file
 # Bazel 6.4 or greater: 'common' means 'any command that supports this flag'
