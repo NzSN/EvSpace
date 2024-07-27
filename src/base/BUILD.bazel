@@ -1,7 +1,9 @@
 filegroup(
     name = "base-hdrs",
     srcs = ["traits.h",
-            "assert.h"],
+            "assert.h",
+            "utility.h",
+            "thread_safety.h"],
 )
 
 cc_library(
