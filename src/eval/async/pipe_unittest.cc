@@ -64,5 +64,26 @@ RC_GTEST_FIXTURE_PROP(PipeTester, Spec, ()) {
   RC_ASSERT(pipe.isEmpty());
 }
 
+struct BiPipeTester : public ::testing::Test {
+
+  void SetUp() override {
+    Message msg_in{1}, msg_out{1};
+    BiPipeParam<Message,Message> param {
+      .in_message  = &msg_in,
+      .in_length   = in_length,
+      .out_message = &msg_out,
+      .out_length  = out_length
+    };
+    pipe = std::make_unique<BiPipe<Message,Message>>(param);
+  }
+
+  static constexpr size_t in_length = 10, out_length = 10;
+  std::unique_ptr<BiPipe<Message,Message>> pipe;
+};
+
+RC_GTEST_FIXTURE_PROP(BiPipeTester, Spec, ()) {
+
+}
+
 } // ASYNC
 } // EVSPACE

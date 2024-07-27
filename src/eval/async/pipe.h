@@ -131,27 +131,40 @@ private:
   size_t length_;
 };
 
-template<typename T>
+template<typename T, typename U>
+struct BiPipeParam {
+  const T* in_message;
+  size_t   in_length;
+
+  const T* out_message;
+  size_t   out_length;
+};
+
+template<typename T, typename U>
 class BiPipe {
+public:
+  BiPipe(BiPipeParam<T,U>& param):
+    in_{*param.in_message, param.in_length},
+    out_{*param.out_message, param.out_length} {}
 
   bool write(const T& message) {
-    return out.write(message);
+    return out_.write(message);
   }
 
   std::optional<T> read() {
-    return in.read();
+    return in_.read();
   }
 
   bool readable() const {
-    return !in.isEmpty();
+    return !in_.isEmpty();
   }
   bool writable() const {
-    return !out.isFull();
+    return !out_.isFull();
   }
 
 private:
-  MessagePipe<T> in;
-  MessagePipe<T> out;
+  MessagePipe<T> in_;
+  MessagePipe<U> out_;
 };
 
 } // ASYNC
