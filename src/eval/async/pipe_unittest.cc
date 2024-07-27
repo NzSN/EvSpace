@@ -1,9 +1,11 @@
 #include <chrono>
 #include <cstdlib>
 #include <gtest/gtest.h>
+#include <optional>
 #include <rapidcheck/gtest.h>
 #include <thread>
 #include <vector>
+#include <limits.h>
 
 #include "pipe.h"
 #include "base/utility.h"
@@ -218,7 +220,66 @@ struct BiPipeTester : public ::testing::Test {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(BiPipeTester, Spec, (int a)) {
+template<unsigned int num, unsigned int upperbound>
+void NumProducer(MinorBiPipe<Message,Message>* pipe, unsigned int* total) {
+
+  while (true) {
+    if (pipe->writable()) {
+      pipe->write(Message{num});
+      *total += num;
+    }
+
+    while (true) {
+      std::optional<Message> msg = pipe->read();
+      if (msg.has_value()) {
+        if (msg.value().getData() >= upperbound) {
+          return;
+        } else {
+          break;
+        }
+      } else {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        continue;
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+}
+
+void Adder(BiPipe<Message,Message>* pipe, unsigned int* sum) {
+
+  std::chrono::milliseconds idle;
+
+  // Wait for producer
+  std::this_thread::sleep_for(
+    std::chrono::milliseconds(100));
+
+  while (true) {
+    if (pipe->readable()) {
+      auto msg = pipe->read();
+      if (msg.has_value()) {
+        if (UINT_MAX - *sum >= msg.value().getData()) {
+          *sum += msg.value().getData();
+        }
+      }
+
+      idle = std::chrono::milliseconds(0);
+    } else {
+      idle += std::chrono::milliseconds(1);
+      if (idle > std::chrono::milliseconds(100)) {
+        return;
+      }
+    }
+
+    if (pipe->writable()) {
+      pipe->write(Message{*sum});
+    }
+    std::this_thread::sleep_for(
+      std::chrono::milliseconds(1));
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(BiPipeTester, Spec, ()) {
   Message msg_in{1}, msg_out{2};
   BiPipeParam<Message, Message> param = {
     .in_message  = &msg_in,
@@ -227,7 +288,32 @@ RC_GTEST_FIXTURE_PROP(BiPipeTester, Spec, (int a)) {
     .out_length  = static_cast<size_t>(*rc::gen::inRange(2, 1000))
   };
 
+  auto pipe = CreateBiPipe(param);
+  auto minor = pipe.CreateMinor();
 
+  unsigned int sum = 0;
+  std::thread t_adder{Adder, &pipe, &sum};
+
+  std::vector<std::thread> producers;
+
+  size_t numOfProducer = *rc::gen::inRange(1, 10);
+  std::vector<unsigned int> totals(numOfProducer);
+
+  for (size_t i = 0; i < numOfProducer; ++i) {
+    producers.emplace_back(NumProducer<1, 10>, &minor, &totals[i]);
+  }
+
+  t_adder.join();
+  for (auto& producer: producers) {
+    producer.join();
+  }
+
+  unsigned int total = 0;
+  for (auto num: totals) {
+    total += num;
+  }
+
+  RC_ASSERT(sum == total);
 }
 
 } // ASYNC

@@ -10,6 +10,7 @@
 #include "base/assert.h"
 #include "base/thread_safety.h"
 #include "base/traits.h"
+#include "base/utility.h"
 
 #define ASYNCHRONOUS EVSPACE::ASYNC::RingPipe
 
@@ -36,7 +37,10 @@ public:
     begin_{pipe_.get()},
     end_{pipe_.get() + message.ByteSizeLong() * length},
     size_{message.ByteSizeLong()},
-    length_{length} {}
+    length_{length} {
+
+    ASSERT(IS_ALIGNED(pipe_.get(), size_));
+  }
 
   RingPipe(const RingPipe&) = delete;
   RingPipe& operator=(RingPipe&) = delete;
@@ -152,11 +156,51 @@ struct BiPipeParam {
 };
 
 template<typename T, typename U>
+class BiPipe;
+
+template<typename T, typename U>
+class MinorBiPipe {
+public:
+  bool write(const T& message) {
+    return out_->write(message);
+  }
+
+  std::optional<T> read() {
+    return in_->read();
+  }
+
+  std::optional<T> peek() {
+    return in_->peek();
+  }
+
+  bool readable() const {
+    return !in_->isEmpty();
+  }
+
+  bool writable() const {
+    return !out_->isFull();
+  }
+private:
+  friend BiPipe<T, U>;
+
+  MinorBiPipe(RingPipe<T>* in, RingPipe<U>* out):
+    in_{in}, out_{out} {}
+
+  RingPipe<T>* in_;
+  RingPipe<U>* out_;
+};
+
+
+template<typename T, typename U>
 class BiPipe {
 public:
   BiPipe(BiPipeParam<T,U>& param):
     in_ {*param.in_message, param.in_length},
     out_{*param.out_message, param.out_length} {}
+
+  MinorBiPipe<U, T> CreateMinor() {
+    return MinorBiPipe<U, T>(&out_, &in_);
+  }
 
   bool write(const T& message) {
     return out_.write(message);
@@ -173,6 +217,7 @@ public:
   bool readable() const {
     return !in_.isEmpty();
   }
+
   bool writable() const {
     return !out_.isFull();
   }

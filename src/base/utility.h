@@ -3,6 +3,9 @@
 
 #include <random>
 
+#define IS_ALIGNED(ADDRESS, BYTE_COUNT) \
+    (((uintptr_t)(const void *)(ADDRESS)) % (BYTE_COUNT) == 0)
+
 namespace EVSPACE {
 namespace BASE {
 namespace UTILITY {

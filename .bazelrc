@@ -2,42 +2,42 @@ startup
 
 build:release --cxxopt=-O3
 
-build --cxxopt   =-std=c++17
-build --cxxopt   =-Isrc
-build --cxxopt   =-pthread
-build --registry =https://raw.githubusercontent.com/NzSN/bazel-central-registry/main/
+build --cxxopt=-std=c++17
+build --cxxopt=-Isrc
+build --cxxopt=-pthread
+build --registry=https://raw.githubusercontent.com/NzSN/bazel-central-registry/main/
 build --noincompatible_sandbox_hermetic_tmp
 build --incompatible_enable_cc_toolchain_resolution
 
-build:debug --strip   =never
-build:debug --cxxopt  =-fsanitize=address
-build:debug --linkopt =-fsanitize=address
-build:debug --cxxopt  =-fsanitize=undefined
-build:debug --linkopt =-fsanitize=undefined
-build:debug --copt    =-DADDRESS_SANITIZER
-build:debug --copt    =-O0
-build:debug --copt    =-g
-build:debug --copt    =-fno-omit-frame-pointer
+build:debug --strip=never
+build:debug --cxxopt=-fsanitize=address
+build:debug --linkopt=-fsanitize=address
+build:debug --cxxopt=-fsanitize=undefined
+build:debug --linkopt=-fsanitize=undefined
+build:debug --copt=-DADDRESS_SANITIZER
+build:debug --copt=-O0
+build:debug --copt=-g
+build:debug --copt=-fno-omit-frame-pointer
 
-build:clang --action_env =BAZEL_COMPILER=clang
-build:clang --linkopt    =-fuse-ld=lld
-build:clang --action_env =CC=clang --host_action_env=CC=clang
-build:clang --action_env =CXX=clang++ --host_action_env=CXX=clang++
+build:clang --action_env=BAZEL_COMPILER=clang
+build:clang --linkopt=-fuse-ld=lld
+build:clang --action_env=CC=clang --host_action_env=CC=clang
+build:clang --action_env=CXX=clang++ --host_action_env=CXX=clang++
 
-build:libc++ --config              =clang
-build:libc++ --action_env          =CXXFLAGS=-stdlib=libc++
-build:libc++ --action_env          =LDFLAGS=-stdlib=libc++
-build:libc++ --action_env          =BAZEL_CXXOPTS=-stdlib=libc++
-build:libc++ --action_env          =BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
-build:libc++ --action_env          =BAZEL_LINKOPTS=-lm:-pthread
-build:libc++ --define force_libcpp =enabled
+build:libc++ --config=clang
+build:libc++ --action_env=CXXFLAGS=-stdlib=libc++
+build:libc++ --action_env=LDFLAGS=-stdlib=libc++
+build:libc++ --action_env=BAZEL_CXXOPTS=-stdlib=libc++
+build:libc++ --action_env=BAZEL_LINKLIBS=-l%:libc++.a:-l%:libc++abi.a
+build:libc++ --action_env=BAZEL_LINKOPTS=-lm:-pthread
+build:libc++ --define force_libcpp=enabled
 
-build:thread_safety --config  =libc++
-build:thread_safety --cxxopt  =-fsanitize=address
-build:thread_safety --linkopt =-fsanitize=address
-build:thread_safety --cxxopt  =-Wthread-safety
-build:thread_safety --copt    =-Wthread-safety
-build:thread_safety --cxxopt  =-D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
+build:thread_safety --config=libc++
+build:thread_safety --cxxopt=-fsanitize=address
+build:thread_safety --linkopt=-fsanitize=address
+build:thread_safety --cxxopt=-Wthread-safety
+build:thread_safety --copt=-Wthread-safety
+build:thread_safety --cxxopt=-D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS
 
 # honor the setting of `skipLibCheck` in the tsconfig.json file
 # Bazel 6.4 or greater: 'common' means 'any command that supports this flag'

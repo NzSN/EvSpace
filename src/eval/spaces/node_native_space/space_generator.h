@@ -23,7 +23,7 @@ struct type_identity { using type = T; };
 template<typename T>
 struct MAPPING_TO_NATIVE;
 
-#define TYPED_ARRAY_MAPPING_LIST(V)                     \
+#define TYPED_ARRAY_MAPPING_LIST(V)                       \
   /* From      TO                  Runtime check value */ \
   V(double*  , Napi::Float64Array, napi_float64_array)    \
   V(float*   , Napi::Float32Array, napi_float32_array)    \
