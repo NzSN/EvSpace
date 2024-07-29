@@ -14,7 +14,8 @@ cc_library(
     name = "async",
     srcs = [":async-srcs"],
     hdrs = [":async-hdrs"],
-    deps = ["//src/eval/async/messages:counter_cc_proto"],
+    deps = ["//src/eval/async/messages:counter_cc_proto",
+            "//src/base:base"],
     visibility = ["//visibility:public"],
 )
 

@@ -15,7 +15,8 @@ WASM_OPTS = [
 cc_binary(
     name = "wasm-space",
     srcs = ["wasm_space.h", "wasm_space.cc"],
-    deps = ["//src/eval/basis:basis"],
+    deps = ["//src/eval/basis:basis",
+            "//src/base:base"],
     linkopts = WASM_OPTS,
 )
 

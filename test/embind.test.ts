@@ -20,7 +20,6 @@ test("Embind test", async () => {
     const mod = await Module();
     const root = await protobuf.load("src/eval/async/messages/counter.proto");
     const counterMessage = root.lookupType("Counter");
-    const counterSetterMessage = root.lookupType("CounterSetter");
 
     let pipe = mod.Communication();
 
@@ -41,7 +40,6 @@ test("Embind with IO", async () => {
 
     const root = await protobuf.load("src/eval/async/messages/counter.proto");
     const counterMessage = root.lookupType("Counter");
-    const counterSetterMessage = root.lookupType("CounterSetter");
 
     let pipe = mod.MultiSettableCounter();
 })

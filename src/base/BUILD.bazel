@@ -4,6 +4,7 @@ filegroup(
             "assert.h",
             "utility.h",
             "thread_safety.h"],
+    visibility = ["//visibility:public"]
 )
 
 cc_library(

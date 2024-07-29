@@ -19,6 +19,7 @@ cc_library(
     copts = ["-pthread"],
     deps = ["@proxy//:proxy",
             "@protobuf",
-            "//src/eval/async:async",],
+            "//src/eval/async:async",
+            "//src/base:base"],
     visibility = ["//visibility:public"],
 )

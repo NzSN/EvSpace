@@ -8,7 +8,7 @@
 
 #include "eval/async/messages/counter.pb.h"
 
-// DECLARED_BASISES(SPAN_WASM_SPACE_FROM_BASIS);
+DECLARED_BASISES(SPAN_WASM_SPACE_FROM_BASIS);
 
 namespace em = emscripten;
 namespace async = EVSPACE::ASYNC;
@@ -30,7 +30,7 @@ ASYNCHRONOUS<Counter> Communication();
 template<typename T>
 struct EmPipe {
   EmPipe(std::string msg_type,
-         async::MessagePipe<T>& pipe):
+         async::RingPipe<T>& pipe):
     message_type(msg_type),
     pipe(em::typed_memory_view(pipe.size(), pipe.pipe())),
     length{pipe.length()} {}
@@ -40,7 +40,7 @@ struct EmPipe {
   size_t length;
 };
 
-void F(async::MessagePipe<Counter> pipe) {
+void F(async::RingPipe<Counter> pipe) {
   Counter counter;
 
   counter.set_counter(0);
@@ -53,11 +53,11 @@ void F(async::MessagePipe<Counter> pipe) {
   }
 }
 
-void G(async::MessagePipe<Counter> pipe) {
+void G(async::RingPipe<Counter> pipe) {
   std::vector<size_t> counterBounds;
 
   while (true) {
-   
+
   }
 }
 
@@ -66,7 +66,7 @@ EmPipe<T> Communication() {
   Counter counter;
   counter.set_counter(1);
 
-  async::MessagePipe<Counter>
+  async::RingPipe<Counter>
     pipe(counter, 1);
 
   EmPipe<T> emPipe("Counter", pipe);
@@ -82,7 +82,7 @@ EmPipe<T> MultiSettableCounter() {
   Counter counter;
   counter.set_counter(1);
 
-  async::MessagePipe<T> pipe(counter, 3);
+  async::RingPipe<T> pipe(counter, 3);
 
   EmPipe<T> emPipe("Counter", pipe);
 
