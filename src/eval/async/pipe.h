@@ -30,12 +30,19 @@ template<typename T,
            has_method_ParseFromArray<T, bool(const void*, size_t)>::value>>
 class RingPipe {
 public:
+
+#define ASSERT_IDX_VALIDATION(IDX) \
+  ASSERT(begin_ <= IDX && IDX < end_, "INVALID PIPE IDX")
+
   RingPipe(const T& message, size_t length):
     pipe_{std::make_unique<uint8_t[]>(message.ByteSizeLong() * length)},
-    head_{pipe_.get()},
-    last_{pipe_.get()},
-    begin_{pipe_.get()},
-    end_{pipe_.get() + message.ByteSizeLong() * length},
+    head_{},
+    read_idx_{&head_[0]},
+    write_idx_{&head_[1]},
+    begin_{0},
+    end_{length},
+    begin_addr_{pipe_.get()},
+    end_addr_{pipe_.get() + message.ByteSizeLong() * length},
     size_{message.ByteSizeLong()},
     length_{length} {
 
@@ -70,80 +77,102 @@ public:
     return pipe_.get();
   }
 
-  std::optional<T> read() EXCLUDES(last_mutex_) {
-    std::lock_guard<std::mutex> lock{last_mutex_};
+  std::optional<T> read() EXCLUDES(read_mutex_) {
+    std::lock_guard<std::mutex> lock{read_mutex_};
 
     if (isEmpty()) {
       return std::nullopt;
     }
 
+    ASSERT_IDX_VALIDATION(*read_idx_);
+
+    uint8_t* slot_to_read = addrOfIdx(*read_idx_);
+
     T message;
-    message.ParseFromArray(last_, size_);
-    last_ = next(last_);
+    message.ParseFromArray(slot_to_read, size_);
+    *read_idx_ = next(*read_idx_);
 
     return message;
   }
 
-  std::optional<T> peek() EXCLUDES(last_mutex_) {
-    std::lock_guard<std::mutex> lock{last_mutex_};
+  std::optional<T> peek() EXCLUDES(read_mutex_) {
+    std::lock_guard<std::mutex> lock{read_mutex_};
     if (isEmpty()) {
       return std::nullopt;
     }
 
+    ASSERT_IDX_VALIDATION(*read_idx_);
+
+    uint8_t* slot_to_peek = addrOfIdx(*read_idx_);
+
     T message;
-    message.ParseFromArray(last_, size_);
+    message.ParseFromArray(slot_to_peek, size_);
 
     return message;
   }
 
-  bool write(const T& message) EXCLUDES(head_mutex_) {
-    std::lock_guard<std::mutex> lock{head_mutex_};
+  bool write(const T& message) EXCLUDES(write_mutex_) {
+    std::lock_guard<std::mutex> lock{write_mutex_};
 
     if (isFull()) {
       return false;
     }
 
-    message.SerializeToArray(head_, size_);
-    head_ = next(head_);
+    ASSERT_IDX_VALIDATION(*write_idx_)
+
+      uint8_t* slot_to_write = addrOfIdx(*write_idx_);
+
+    message.SerializeToArray(slot_to_write, size_);
+    *write_idx_ = next(*write_idx_);
     return true;
   }
 
   bool isEmpty() const NO_THREAD_SAFETY_ANALYSIS {
-    return head_ == last_;
+    return *read_idx_ == *write_idx_;
   }
 
   bool isFull() const NO_THREAD_SAFETY_ANALYSIS {
-    return length_ == 0 || next(head_) == last_;
+    return length_ == 0 || next(*write_idx_) == *read_idx_;
+  }
+
+  uint8_t* addrOfIdx(uint32_t idx) {
+    return const_cast<uint8_t*>(begin_addr_ + (idx * size_));
   }
 
 private:
   friend PipeTester;
 
-  uint8_t* next(uint8_t* current) const {
-    ASSERT(begin_ <= current && current < end_,
-           "Invalid address");
-    uint8_t* next_pos = current + size_;
+  uint64_t next(uint64_t current) const {
+    ASSERT_IDX_VALIDATION(current);
+
+    uint64_t next_pos = current + 1;
     if (next_pos >= end_) {
-      return const_cast<uint8_t*>(begin_);
+      return 0;
     } else {
       return next_pos;
     }
   }
 
   std::unique_ptr<uint8_t[]> pipe_;
-  uint8_t* head_ GUARDED_BY(head_mutex_);
-  uint8_t* last_ GUARDED_BY(last_mutex_);
+  uint64_t head_[2];
+  // Reference head_[0];
+  uint64_t* read_idx_  GUARDED_BY(read_mutex_);
+  // Reference head_[1];
+  uint64_t* write_idx_ GUARDED_BY(write_mutex_);
 
-  const uint8_t* begin_;
-  const uint8_t* end_;
+  const uint64_t begin_;
+  const uint64_t end_;
+
+  const uint8_t* begin_addr_;
+  const uint8_t* end_addr_;
 
   // Size of message in pipe
   size_t size_;
   // Number of messages in pipe
   size_t length_;
 
-  std::mutex head_mutex_;
-  std::mutex last_mutex_;
+  std::mutex read_mutex_;
+  std::mutex write_mutex_;
 };
 
 template<typename T, typename U>
