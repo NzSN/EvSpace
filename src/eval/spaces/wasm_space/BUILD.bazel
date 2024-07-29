@@ -4,7 +4,7 @@ WASM_OPTS = [
     "-sUSE_PTHREADS=1",
     "-pthread",
     "-O3",
-    "--bind",
+    "-lembind",
     "-sWASM=1",
     "-sFETCH=1",
     "-sMODULARIZE=1",

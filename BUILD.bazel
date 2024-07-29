@@ -23,7 +23,9 @@ ts_project(
             "src/web/evaluator_native.ts",
             "src/web/evaluator_wasm.ts",
             "src/web/platforms.ts",
-            "src/web/utility.ts"],
+            "src/web/utility.ts",
+            "src/web/async/pipe.ts",
+            "src/web/async/message.ts"],
     data = [
         "//src/eval/spaces/node_native_space:hello",
         "//src/eval/spaces/wasm_space:wasm-space-cc",

@@ -1,7 +1,9 @@
+import * as protobuf from "protobufjs";
+
 import Module from "../src/eval/spaces/wasm_space/wasm-space-cc/wasm-space.js";
 import { delay } from "../src/web/utility";
-import * as protobuf from "protobufjs";
 import { is_nodejs } from "../src/web/platforms";
+import { RingPipeMeta, BiPipeMeta, BiPipe } from "../src/web/async/pipe";
 
 function getCounter(messenger: any, pipe: any): number {
     let msg: any;
@@ -25,7 +27,7 @@ test("Embind test", async () => {
 
     let count = getCounter(counterMessage, pipe);
     while (count < 60) {
-        await delay(10);
+        await delay(5);
         let updated = getCounter(counterMessage, pipe);
         expect(count <= updated).toBeTruthy();
         count = updated;
@@ -35,11 +37,31 @@ test("Embind test", async () => {
     expect(count === 60).toBeTruthy();
 })
 
-test("Embind with IO", async () => {
+test("Echo test", async () => {
     const mod = await Module();
 
-    const root = await protobuf.load("src/eval/async/messages/counter.proto");
-    const counterMessage = root.lookupType("Counter");
+    let pipeMeta: BiPipeMeta = mod.Echo();
 
-    let pipe = mod.MultiSettableCounter();
+    let pipe: BiPipe = new BiPipe(pipeMeta);
+    await pipe.init();
+
+    let count = 20;
+    let payload = { "counter" : 10 };
+
+    while (count > 0) {
+        payload.counter = count;
+        pipe.write(payload);
+
+        while (!pipe.readable()) {
+            await delay(1);
+        }
+        let msg = pipe.read();
+
+        expect(msg?.counter == count).toBeTruthy();
+
+        --count;
+    }
+
+    payload.counter = 0;
+    pipe.write(payload);
 })
