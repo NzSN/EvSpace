@@ -113,7 +113,8 @@ struct CALLING<void(*)(ARGS...)> {
 #define CHOOSE_PRINT_PARA_N(_0, _1, _2, _3, _4, _5, _Name, ...) _Name
 #define PRINT_PARA(...)                         \
   CHOOSE_PRINT_PARA_N(                          \
-    __VA_ARGS__,                                \
+    _0,                                         \
+    ##__VA_ARGS__,                              \
     PRINT_PARA_N,                               \
     PRINT_PARA_N,                               \
     PRINT_PARA_N,                               \
