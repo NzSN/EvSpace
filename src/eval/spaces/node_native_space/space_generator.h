@@ -114,7 +114,7 @@ struct AsyncStructMapping<async::RingPipeMeta<T>> {
     object.Set("pipe", array);
 
     Napi::ArrayBuffer rw_head_buffer = Napi::ArrayBuffer::New(
-      info.Env(), sizeof(uint32_t) * 2);
+      info.Env(), meta.rw_head, sizeof(uint32_t) * 2);
     Napi::Uint32Array rw_head = Napi::Uint32Array
       ::New(info.Env(), 2, rw_head_buffer, 0);
     object.Set("rw_head", rw_head);
@@ -451,13 +451,13 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
   PARA_TYPE(EVAL);
 
 #define SPAWN_NODE_NATIVE_WRAPPER_SIGNATURE(    \
-  DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE)     \
+  DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE, IS_C_LINKAGE)     \
   Napi::Value _##DECLARE(const Napi::CallbackInfo& info) {              \
     NODE_NATIVE_WRAPPER_PARAM_TRANS(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE); \
     NODE_NATIVE_WRAPPER_EVAL(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE); \
   }
 
-#define REGISTERS(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE) \
+#define REGISTERS(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE, IS_C_LINKAGE) \
   exports[#DECLARE] = Napi::Function::New(env, _##DECLARE);
 #define SPAWN_API_REGISTER_BLOCK() \
   static Napi::Object Init(Napi::Env env, Napi::Object exports) {       \

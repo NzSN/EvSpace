@@ -22,11 +22,13 @@ void asyncCount(double *seq, size_t size);
   V(insertionSort,                              \
     insertionSignature,                         \
     insertionParaName,                          \
-    insertionTypes)                             \
-  V(asyncCount,                                \
-    asyncCountSignature,                       \
-    asyncCountParaName,                        \
-    asyncCountTypes)
+    insertionTypes,                             \
+    TRUE_M)                                     \
+  V(asyncCount,                                 \
+    asyncCountSignature,                        \
+    asyncCountParaName,                         \
+    asyncCountTypes,                            \
+    TRUE_M)
 
 ///////////////////////////////////////////////////////////////////////////////
 //                             InsertionSort Meta                            //

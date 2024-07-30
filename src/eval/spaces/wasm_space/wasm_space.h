@@ -123,18 +123,26 @@ struct CALLING<void(*)(ARGS...)> {
     PRINT_PARA_0)(__VA_ARGS__)
 #define PRINT_ARG_TYPES(B, R, ...) __VA_ARGS__
 #define PRINT_F_TYPE(B, R, ...) R(*)(__VA_ARGS__)
-#define AS_WASM_BASIS(B, SIGNATURE, PARA_NAME, TYPES) \
-  SIGNATURE(GEN_SIGNATURE) {                              \
-    return CALLING<TYPES(PRINT_F_TYPE)>::call( \
+#define AS_WASM_BASIS_EMBIND(B, SIGNATURE, PARA_NAME, TYPES)       \
+  SIGNATURE(GEN_SIGNATURE) {                                       \
+    return CALLING<TYPES(PRINT_F_TYPE)>::call(                     \
       EVSPACE::BASIS::DECL::B PARA_NAME(PRINT_PARA));              \
   }
-#define AS_WASM_BASIS_C_LINKAGE(B, SIGNATURE, PARA_NAME, TYPES) \
-  extern "C" { SIGNATURE(GEN_SIGNATURE); }                \
-  SIGNATURE(GEN_SIGNATURE) {                              \
-    return CALLING<TYPES(PRINT_F_TYPE)>::call( \
-      EVSPACE::BASIS::DECL::B PARA_NAME(PRINT_PARA));              \
+#define AS_WASM_BASIS_C_LINKAGE(B, SIGNATURE, PARA_NAME, TYPES)         \
+  extern "C" { SIGNATURE(GEN_SIGNATURE); }                              \
+  SIGNATURE(GEN_SIGNATURE) {                                            \
+    return CALLING<TYPES(PRINT_F_TYPE)>::call(                          \
+      EVSPACE::BASIS::DECL::B /* , is added by PRINT_PARA is nedded */  \
+      PARA_NAME(PRINT_PARA));                                           \
   }
-
+#define SELECT_WAYS_TO_WRAP_BASIS(_1, _2, _NAME, ...) _NAME
+#define WRAP_BASIS(...) \
+  SELECT_WAYS_TO_WRAP_BASIS(\
+    __VA_ARGS__, \
+    AS_WASM_BASIS_C_LINKAGE, \
+    AS_WASM_BASIS_EMBIND)
+#define AS_WASM_BASIS(B, SIGNATURE, PARA_NAME, TYPES, IS_C_LINKAGE) \
+  IS_C_LINKAGE(WRAP_BASIS)(B, SIGNATURE, PARA_NAME, TYPES)
 
 #define SPAN_WASM_SPACE_FROM_BASIS(BASIS, R, ...) \
   AS_WASM_BASIS(BASIS, R, __VA_ARGS__)

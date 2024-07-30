@@ -21,6 +21,5 @@ cc_proto_library(
 cc_binary(
     name = "example_proto",
     srcs = ["example.cc"],
-    deps = [":counter_cc_proto",
-            "@protobuf"]
+    deps = [":counter_cc_proto"]
 )

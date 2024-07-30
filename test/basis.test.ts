@@ -1,8 +1,15 @@
 import Module from "../src/eval/spaces/wasm_space/wasm-space-cc/wasm-space.js";
 import * as native from "../src/eval/spaces/node_native_space/hello";
+import { delay } from "../src/web/utility.js";
 
 test("Napi Version", async () => {
     expect(native != undefined).toBeTruthy();
+
+    console.log(native);
+    let meta = native.Echo();
+    console.log(meta);
+    await delay(2000);
+    console.log(meta);
 
     let size = 12;
     let buffer = new SharedArrayBuffer(size * 8);
