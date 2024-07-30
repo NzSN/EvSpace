@@ -1,6 +1,5 @@
 #include "eval/basis/basis.h"
 #include "insertion_sort.h"
-#include "eval/async/pipe.h"
 
 #ifndef EVSPACE_EVAL_BASIS_SORT_SORTH_H_
 #define EVSPACE_EVAL_BASIS_SORT_SORTH_H_

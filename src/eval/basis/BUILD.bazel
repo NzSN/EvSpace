@@ -14,7 +14,8 @@ filegroup(
 cc_library(
     name = "basis",
     srcs = [":basis-srcs",
-            "//src/eval/basis/sort:sort-srcs"],
+            "//src/eval/basis/sort:sort-srcs",
+            "//src/eval/basis/misc:misc-srcs"],
     hdrs = ["basis-headers"],
     copts = ["-pthread"],
     deps = ["@proxy//:proxy",

@@ -8,6 +8,8 @@
 #include <type_traits>
 #include <tuple>
 
+#include "eval/async/pipe.h"
+
 #define NAPI_DISABLE_CPP_EXCEPTIONS
 #include <napi.h>
 
@@ -80,15 +82,64 @@ struct SizeTypeMapping {
   using type = void;
 };
 #define DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE(NT, CT) \
-  template<>                                           \
-  struct SizeTypeMapping<NT> {                          \
-    using type = CT;                                   \
+  template<>                                    \
+  struct SizeTypeMapping<NT> {                  \
+    using type = CT;                            \
   };
 
 TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE);
 #undef DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE
 
-#define DECLARE_
+namespace async = EVSPACE::ASYNC;
+template<typename T>
+struct AsyncStructMapping {
+  static_assert(std::integral_constant<bool, false>::value,
+    "Not an async structure");
+};
+template<typename T>
+struct AsyncStructMapping<async::RingPipeMeta<T>> {
+  static Napi::Value mapping(async::RingPipeMeta<T>& meta,
+                             const Napi::CallbackInfo& info) {
+    auto object = Napi::Object::New(info.Env());
+    // TODO: AsyncStruct itself does not has any information to
+    // about the type of what message should oppsite-side should used.
+    object.Set("message_type", Napi::String::New(info.Env(), "Counter"));
+
+    Napi::ArrayBuffer pipe_buffer = Napi::ArrayBuffer::New(
+      info.Env(), meta.pipe, meta.msgSize * meta.length);
+    Napi::Uint8Array array = Napi::Uint8Array
+      ::New(info.Env(),
+            meta.msgSize * meta.length,
+            pipe_buffer, 0);
+    object.Set("pipe", array);
+
+    Napi::ArrayBuffer rw_head_buffer = Napi::ArrayBuffer::New(
+      info.Env(), sizeof(uint32_t) * 2);
+    Napi::Uint32Array rw_head = Napi::Uint32Array
+      ::New(info.Env(), 2, rw_head_buffer, 0);
+    object.Set("rw_head", rw_head);
+
+    object.Set("length", Napi::Number::New(info.Env(), meta.length));
+    object.Set("size", Napi::Number::New(info.Env(), meta.msgSize));
+
+    return object;
+  }
+};
+template<typename T>
+struct AsyncStructMapping<EVSPACE::ASYNC::SymPipeMeta<T>> {
+  static Napi::Value mapping(
+    EVSPACE::ASYNC::SymPipeMeta<T>& meta,
+    const Napi::CallbackInfo& info) {
+
+    auto object = Napi::Object::New(info.Env());
+    object.Set("in", AsyncStructMapping<ASYNC::RingPipeMeta<T>>
+               ::mapping(meta.out_meta, info));
+    object.Set("out", AsyncStructMapping<ASYNC::RingPipeMeta<T>>
+               ::mapping(meta.in_meta, info));
+    return object;
+  }
+};
+
 
 template<typename... Ts>
 struct Count {
@@ -310,6 +361,18 @@ struct AsNodeExpression<void(*)(Args...),
     return info.Env().Undefined();
   }
 };
+template<typename T, typename... ExtractInfos, typename... Ts>
+struct AsNodeExpression<EVSPACE::ASYNC::SymPipeMeta<T>(*)(),
+                        std::tuple<ExtractInfos...>,
+                        std::tuple<Ts...>> {
+  static auto eval(EVSPACE::ASYNC::SymPipeMeta<T>(*f)(),
+                   std::tuple<Ts...>& t,
+                   const Napi::CallbackInfo& info) {
+    using Meta = ASYNC::SymPipeMeta<T>;
+    auto pipe = f(ArgExtracter<std::tuple<Ts...>>::template argTrans<ExtractInfos>(t)...);
+    return AsyncStructMapping<Meta>::mapping(pipe, info);
+  }
+};
 template<typename R, typename... Args, typename... ExtractInfos, typename... Ts>
 struct AsNodeExpression<R(*)(Args...),
                         std::tuple<ExtractInfos...>,
@@ -362,9 +425,22 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
 #define PARAM_TRANS_IMPL(...)                           \
   SELECT_BY_NUM_OF_PARAM(__VA_ARGS__, N, N, N, N, N, 0)
 
-#define EVAL(B, R, ...) \
+#define EVAL_WITH_ARGS(B, R, ...) \
   return CODEGEN::Eval<R(*)(__VA_ARGS__), __VA_ARGS__>( \
     EVSPACE::BASIS::DECL::B, NATIVE_TUPLE_RECEIVER.value(), info)
+#define EVAL_WITHOUT_ARGS(B, R, ...) \
+  return CODEGEN::Eval<R(*)()>( \
+    EVSPACE::BASIS::DECL::B, NATIVE_TUPLE_RECEIVER.value(), info)
+#define CHOOSE_EVAL(_0, _1, _2, _3, _4, _5, _NAME, ...) _NAME
+#define EVAL(B, R, ...)       \
+  CHOOSE_EVAL(__VA_ARGS__,    \
+              EVAL_WITH_ARGS, \
+              EVAL_WITH_ARGS, \
+              EVAL_WTIH_ARGS, \
+              EVAL_WITH_ARGS,  \
+              EVAL_WITH_ARGS,  \
+              EVAL_WITHOUT_ARGS)(B, R, __VA_ARGS__)
+
 
 #define NODE_NATIVE_WRAPPER_PARAM_TRANS(        \
   DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE)     \

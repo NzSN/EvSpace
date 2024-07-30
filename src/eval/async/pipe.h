@@ -13,13 +13,41 @@
 #include "base/traits.h"
 #include "base/utility.h"
 
-#define ASYNCHRONOUS EVSPACE::ASYNC::RingPipe
+#define ASYNCHRONOUS(T) EVSPACE::ASYNC::SymPipeMeta<T>
+
+namespace EVSPACE {
+namespace EVAL {
+namespace SPACE {
+namespace WASM_SPACE {
+namespace CODEGEN {
 
 template<typename T>
 struct EmPipeMeta;
 
 template<typename T, typename U>
 struct EmBiPipeMeta;
+
+
+} // CODEGEN
+} // WASM_SPACE
+} // SPACE
+} // EVAL
+} // EVSPACE
+
+namespace EVSPACE {
+namespace EVAL {
+namespace SPACE {
+namespace NODE_NATIVE_SPACE {
+namespace CODEGEN {
+
+template<typename T>
+struct AsyncStructMapping;
+
+} // CODEGEN
+} // NODE_NATIVE_SPACE
+} // SPACE
+} // EVAL
+} // EVSPACE
 
 namespace EVSPACE {
 namespace ASYNC {
@@ -30,6 +58,17 @@ DEFINE_TRAIT_HAS_METHOD(ByteSizeLong);
 DEFINE_TRAIT_HAS_METHOD(SerializeToArray);
 DEFINE_TRAIT_HAS_METHOD(ParseFromArray);
 
+template<typename T>
+struct RingPipeMeta {
+  using type = T;
+
+  uint8_t* pipe;
+  uint32_t* rw_head;
+  size_t length;
+  size_t msgSize;
+};
+
+
 template<typename T,
          typename = std::enable_if<
            has_method_ByteSizeLong<T,size_t()>::value &&
@@ -37,6 +76,16 @@ template<typename T,
            has_method_ParseFromArray<T, bool(const void*, size_t)>::value>>
 class RingPipe {
 public:
+  RingPipeMeta<T> generateMeta() {
+    RingPipeMeta<T> meta = {
+      .pipe = pipe(),
+      .rw_head = &rw_head_[0],
+      .length = length(),
+      .msgSize = msgSize()
+    };
+
+    return meta;
+  }
 
 #define ASSERT_VALIDITY_OF_IDX(IDX) \
   ASSERT(begin_ <= IDX && IDX < end_, "INVALID PIPE IDX")
@@ -45,7 +94,7 @@ public:
 
   RingPipe(const T& message, size_t length):
     pipe_       {std::make_unique<uint8_t[]>(message.ByteSizeLong() * length)},
-    rw_head_    {0,0},
+    rw_head_    {std::make_unique<uint32_t[]>(2)},
     read_idx_   {&rw_head_[0]},
     write_idx_  {&rw_head_[1]},
     begin_      {0},
@@ -57,6 +106,7 @@ public:
 
     ASSERT(IS_ALIGNED(pipe_.get(), msgSize_));
     memset(pipe_.get(), 0, message.ByteSizeLong() * length);
+    memset(rw_head_.get(), 0, sizeof(uint32_t) * 2);
   }
 
   RingPipe(const RingPipe&) = delete;
@@ -64,7 +114,7 @@ public:
 
   RingPipe(RingPipe&& other):
     pipe_       {std::move(other.pipe_)},
-    rw_head_    {other.rw_head_[0], other.rw_head_[1]},
+    rw_head_    {std::move(other.rw_head_)},
     read_idx_   {other.read_idx_},
     write_idx_  {other.write_idx_},
     begin_      {other.begin_},
@@ -155,7 +205,12 @@ public:
 
 private:
   friend PipeTester;
-  friend EmPipeMeta<T>;
+  friend EVAL::SPACE::WASM_SPACE::CODEGEN::EmPipeMeta<T>;
+  friend EVAL
+          ::SPACE
+          ::NODE_NATIVE_SPACE
+          ::CODEGEN
+          ::AsyncStructMapping<RingPipe<T>>;
 
   uint32_t next(uint32_t current) const {
     ASSERT_VALIDITY_OF_IDX(current);
@@ -185,7 +240,7 @@ private:
   }
 
   std::unique_ptr<uint8_t[]> pipe_;
-  uint32_t rw_head_[2];
+  std::unique_ptr<uint32_t[]> rw_head_;
   // Reference rw_head_[0];
   uint32_t* read_idx_  GUARDED_BY(read_mutex_);
   // Reference rw_head_[1];
@@ -245,6 +300,12 @@ public:
   }
 private:
   friend BiPipe<T, U>;
+  friend EVAL
+          ::SPACE
+          ::NODE_NATIVE_SPACE
+          ::CODEGEN
+          ::AsyncStructMapping<RingPipe<T>>;
+
 
   MinorBiPipe(RingPipe<T>* in, RingPipe<U>* out):
     in_{in}, out_{out} {}
@@ -253,10 +314,25 @@ private:
   RingPipe<U>* out_;
 };
 
+template<typename T, typename U>
+struct BiPipeMeta {
+  RingPipeMeta<T> in_meta;
+  RingPipeMeta<U> out_meta;
+};
+
 
 template<typename T, typename U>
 class BiPipe {
 public:
+  BiPipeMeta<T,U> generateMeta() {
+    BiPipeMeta<T,U> meta = {
+      .in_meta = in_.generateMeta(),
+      .out_meta = out_.generateMeta()
+    };
+
+    return meta;
+  }
+
   BiPipe(BiPipeParam<T,U>& param):
     in_ {*param.in_message, param.in_length},
     out_{*param.out_message, param.out_length} {}
@@ -268,6 +344,7 @@ public:
   MinorBiPipe<U, T> CreateMinor() {
     return MinorBiPipe<U, T>(&out_, &in_);
   }
+
 
   bool write(const T& message) {
     return out_.write(message);
@@ -290,11 +367,19 @@ public:
   }
 
 private:
-  friend EmBiPipeMeta<T, U>;
+  friend EVAL::SPACE::WASM_SPACE::CODEGEN::EmBiPipeMeta<T, U>;
+  friend EVAL
+          ::SPACE
+          ::NODE_NATIVE_SPACE
+          ::CODEGEN
+          ::AsyncStructMapping<RingPipe<T>>;
+
 
   RingPipe<T> in_;
   RingPipe<U> out_;
 };
+template<typename T>
+using SymPipeMeta = BiPipeMeta<T,T>;
 
 } // ASYNC
 } // EVSPACE

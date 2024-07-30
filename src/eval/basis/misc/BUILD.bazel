@@ -1,0 +1,45 @@
+filegroup(
+    name = "misc-basis-srcs",
+    srcs = ["misc.h",
+            "misc_declarations.h",
+            "misc_declarations.cc"],
+)
+
+filegroup(
+    name = "misc-basis-hdrs",
+    srcs = ["misc.h", "misc_declarations.h"]
+)
+
+filegroup(
+    name = "trivial-srcs",
+    srcs = ["trivial.h"],
+)
+
+filegroup(
+    name = "trivial-hdrs",
+    srcs = ["trivial.h"]
+)
+
+filegroup(
+    name = "misc-hdrs",
+    srcs = [":trivial-hdrs",
+            ":misc-basis-hdrs"],
+    visibility = ["//visibility:public"]
+)
+
+filegroup(
+    name = "misc-srcs",
+    srcs = [":misc-basis-srcs", ":trivial-srcs"],
+    visibility = ["//visibility:public"]
+)
+
+cc_test(
+    name = "misc-unittest",
+    srcs = ["misc_unittest.cc",
+            ":misc-basis-srcs",
+            ":trivial-srcs",
+            "//src/eval/basis:basis-headers"],
+    deps = ["@com_google_googletest//:gtest_main",
+            "@rapidcheck//:rapidcheck",
+            "//src/eval/async:async"]
+)

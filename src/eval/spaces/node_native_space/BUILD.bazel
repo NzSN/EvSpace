@@ -8,7 +8,9 @@ node_binary(
             "//src/eval/basis:basis-srcs",
             "//src/eval/basis/sort:sort-srcs",
             "//src/eval/async:async-srcs",
-            "//src/base:base-hdrs"],
+            "//src/base:base-hdrs",
+            "//src/eval/basis/misc:misc-srcs"],
+    deps = ["//src/eval/async:async"],
     include_dirs = ["./src"],
     node_modules = "//:node_modules",
     visibility = ["//visibility:public"]

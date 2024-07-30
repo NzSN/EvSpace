@@ -8,11 +8,6 @@
 
 #include "eval/async/messages/counter.pb.h"
 
-DECLARED_BASISES(SPAN_WASM_SPACE_FROM_BASIS);
-
-namespace em = emscripten;
-namespace async = EVSPACE::ASYNC;
-
 template<>
 struct em::smart_ptr_trait<std::unique_ptr<uint8_t>> {
   typedef typename std::unique_ptr<uint8_t>::element_type element_type;
@@ -21,39 +16,13 @@ struct em::smart_ptr_trait<std::unique_ptr<uint8_t>> {
   }
 };
 
-namespace BASIS {
+namespace EVSPACE {
+namespace EVAL {
+namespace SPACE {
+namespace WASM_SPACE {
+namespace CODEGEN {
 
-ASYNCHRONOUS<Counter> Communication();
-
-} // BASIS
-
-template<typename T>
-struct EmPipeMeta {
-  EmPipeMeta(std::string msg_type, async::RingPipe<T>& pipe):
-    message_type(msg_type),
-    pipe(em::typed_memory_view(pipe.length() * pipe.msgSize(), pipe.pipe())),
-    rw_head{em::typed_memory_view(
-        sizeof(pipe.rw_head_) / sizeof(uint32_t), pipe.rw_head_)},
-    length{pipe.length()},
-    msgSize{pipe.msgSize()} {}
-
-  std::string message_type;
-  em::val pipe;
-  em::val rw_head;
-  size_t length;
-  size_t msgSize;
-};
-
-template<typename T, typename U>
-struct EmBiPipeMeta {
-  EmBiPipeMeta(std::string in_msg_type, std::string out_msg_type,
-               async::BiPipe<T, U>& pipe):
-    in_meta{in_msg_type, pipe.in_},
-    out_meta{out_msg_type, pipe.out_} {}
-
-  EmPipeMeta<T> in_meta;
-  EmPipeMeta<U> out_meta;
-};
+DECLARED_BASISES(SPAN_WASM_SPACE_FROM_BASIS);
 
 void Communication_fn(async::RingPipe<Counter> pipe) {
   Counter counter;
@@ -128,8 +97,9 @@ EmBiPipeMeta<T,T> Echo() {
 }
 
 EMSCRIPTEN_BINDINGS(WasmSpace) {
+  EMBIND_BASISES(SPAWN_EMBINDING);
+
   em::function("Communication", &Communication<Counter>);
-  em::function("Echo",  &Echo<Counter>);
 
   em::class_<EmPipeMeta<Counter>>("EmPipeMeta")
     .property("message_type", &EmPipeMeta<Counter>::message_type)
@@ -142,3 +112,9 @@ EMSCRIPTEN_BINDINGS(WasmSpace) {
     .property("in", &EmBiPipeMeta<Counter, Counter>::out_meta)
     .property("out", &EmBiPipeMeta<Counter, Counter>::in_meta);
 }
+
+} // CODEGEN
+} // WASM_SPACE
+} // SPACE
+} // EVAL
+} // EVSPACE

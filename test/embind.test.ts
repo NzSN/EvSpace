@@ -43,6 +43,7 @@ test("Echo test", async () => {
     let pipeMeta: BiPipeMeta = mod.Echo();
 
     let pipe: BiPipe = new BiPipe(pipeMeta);
+
     await pipe.init();
 
     let count = 20;
