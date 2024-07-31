@@ -433,7 +433,8 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
     EVSPACE::BASIS::DECL::B, NATIVE_TUPLE_RECEIVER.value(), info)
 #define CHOOSE_EVAL(_0, _1, _2, _3, _4, _5, _NAME, ...) _NAME
 #define EVAL(B, R, ...)       \
-  CHOOSE_EVAL(__VA_ARGS__,    \
+  CHOOSE_EVAL(_0,             \
+              ##__VA_ARGS__,    \
               EVAL_WITH_ARGS, \
               EVAL_WITH_ARGS, \
               EVAL_WTIH_ARGS, \
