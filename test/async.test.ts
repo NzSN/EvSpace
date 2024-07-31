@@ -1,5 +1,5 @@
 import { RingPipeMeta, BiPipeMeta, BiPipe } from "../src/web/async/pipe";
-import * as native from "../src/eval/spaces/node_native_space/hello";
+import * as native from "../src/eval/spaces/node_native_space/node_native_space";
 import { delay } from "../src/web/utility";
 
 import { CreateEvaluator } from "../src/web/evaluator_factory";

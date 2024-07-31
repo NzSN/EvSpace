@@ -1,8 +1,8 @@
 load("@node_native_rules//:natives/node_binary.bzl", "node_binary")
 
 node_binary(
-    name = "hello",
-    srcs = ["hello.cc",
+    name = "node_native_space",
+    srcs = ["node_native_space.cc",
             "space_generator.h",
             "node_native_space.h",
             "//src/eval/basis:basis-srcs",

@@ -1,5 +1,5 @@
 import { Evaluator } from './evaluator';
-import * as basis from "../eval/spaces/node_native_space/hello";
+import * as basis from "../eval/spaces/node_native_space/node_native_space";
 import { BiPipe, BiPipeMeta } from './async/pipe';
 import { delay } from './utility';
 

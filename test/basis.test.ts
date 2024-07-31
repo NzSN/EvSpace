@@ -1,5 +1,5 @@
 import Module from "../src/eval/spaces/wasm_space/wasm-space-cc/wasm-space.js";
-import * as native from "../src/eval/spaces/node_native_space/hello";
+import * as native from "../src/eval/spaces/node_native_space/node_native_space";
 import { delay } from "../src/web/utility.js";
 
 test("Napi Version", async () => {

@@ -58,6 +58,16 @@ DEFINE_TRAIT_HAS_METHOD(ByteSizeLong);
 DEFINE_TRAIT_HAS_METHOD(SerializeToArray);
 DEFINE_TRAIT_HAS_METHOD(ParseFromArray);
 
+template<typename T,
+         typename = std::enable_if<
+           has_method_ByteSizeLong<T,size_t()>::value &&
+           has_method_SerializeToArray<T, bool(void*,size_t)>::value &&
+           has_method_ParseFromArray<T, bool(const void*, size_t)>::value>>
+class StreamPipe {
+private:
+  size_t length;
+};
+
 template<typename T>
 struct RingPipeMeta {
   using type = T;
@@ -67,7 +77,6 @@ struct RingPipeMeta {
   size_t length;
   size_t msgSize;
 };
-
 
 template<typename T,
          typename = std::enable_if<
