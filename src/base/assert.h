@@ -31,20 +31,24 @@
 #endif
 
 #define ASSERT_WITHOUT_MSG(COND)                            \
-  do {                                                      \
+  ({                                                        \
+    do {                                                    \
     if (!(COND)) {                                          \
       std::cerr << ASSERT_FAILURE_MESSAGE(COND);            \
       std::abort();                                         \
     }                                                       \
-  } while(0);
+    } while(0); \
+  })
 
 #define ASSERT_WITH_MSG(COND, MSG)                \
+  ({                                              \
   do {                                            \
     if (!(COND)) {                                \
       std::cerr << ASSERT_FAILURE_MESSAGE(COND);  \
       std::abort();                               \
     }                                             \
-  } while (0);
+  } while (0);                                    \
+  })
 
 #define GET_MACRO(_1,_2,NAME,...) NAME
 #define ASSERT(...) GET_MACRO( \

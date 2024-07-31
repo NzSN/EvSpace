@@ -118,12 +118,20 @@ public:
     read_idx_   {other.read_idx_},
     write_idx_  {other.write_idx_},
     begin_      {other.begin_},
-    end_        {other.length_},
+
+    end_        {
+      other.length_ < UINT32_MAX ?
+      static_cast<decltype(end_)>(other.length_) :
+      UINT32_MAX
+    },
+
     begin_addr_ {other.begin_addr_},
     end_addr_   {other.end_addr_},
     msgSize_    {other.msgSize_},
-    length_     {other.length_}
-                {}
+    length_     {other.length_} {
+
+
+  }
 
   RingPipe& operator=(RingPipe&& other) {
     this->pipe_ = std::move(other.pipe_);
