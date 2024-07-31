@@ -26,3 +26,13 @@ jest_test(
             ],
     node_modules = "//:node_modules",
 )
+
+jest_test(
+    name = "async-unittest",
+    data = ["//:main",
+            "async.test.ts",
+            "babel.config.js",
+            "//src/eval/async/messages:counter_proto_js"
+            ],
+    node_modules = "//:node_modules",
+)
