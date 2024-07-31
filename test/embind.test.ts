@@ -37,6 +37,10 @@ test("Embind test", async () => {
     expect(count === 60).toBeTruthy();
 })
 
+function f(fn: (number) => number) {
+
+}
+
 test("Echo test", async () => {
     const mod = await Module();
 

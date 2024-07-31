@@ -1,5 +1,7 @@
 import { Evaluator } from './evaluator';
 import Module from "../eval/spaces/wasm_space/wasm-space-cc/wasm-space.js";
+import { BiPipe, BiPipeMeta } from './async/pipe';
+import { delay } from './utility.js';
 
 export class WasmEvaluator implements Evaluator {
     private _mod: any;
@@ -29,6 +31,31 @@ export class WasmEvaluator implements Evaluator {
             this._mod.HEAP8.buffer, buf, nums.length);
 
         return array;
+    }
+
+    async echo<T>(count: number, f: (number) => T): Promise<void> {
+        let pipeMeta: BiPipeMeta = this._mod.Echo();
+        let pipe: BiPipe = new BiPipe(pipeMeta);
+
+        await pipe.init();
+
+        let payload = { "counter" : 0 };
+        while (count > 0) {
+            payload.counter = count;
+            pipe.write(payload);
+
+            while (!pipe.readable()) {
+                await delay(1);
+            }
+            let msg = pipe.read();
+
+            f(msg?.counter);
+
+            --count;
+        }
+
+        payload.counter = 0;
+        pipe.write(payload);
     }
 }
 
