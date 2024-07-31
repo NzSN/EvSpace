@@ -1,17 +1,20 @@
 #ifndef EVSPACE_EVAL_ASYNC_PIPE_H_
 #define EVSPACE_EVAL_ASYNC_PIPE_H_
 
+#include <chrono>
+#include <condition_variable>
 #include <cstring>
 #include <mutex>
 #include <cstdint>
 #include <memory>
 #include <stddef.h>
 #include <optional>
+#include <string.h>
+#include <type_traits>
 
 #include "base/assert.h"
 #include "base/thread_safety.h"
 #include "base/traits.h"
-#include "base/utility.h"
 
 #define ASYNCHRONOUS(T) EVSPACE::ASYNC::SymPipeMeta<T>
 
@@ -58,16 +61,6 @@ DEFINE_TRAIT_HAS_METHOD(ByteSizeLong);
 DEFINE_TRAIT_HAS_METHOD(SerializeToArray);
 DEFINE_TRAIT_HAS_METHOD(ParseFromArray);
 
-template<typename T,
-         typename = std::enable_if<
-           has_method_ByteSizeLong<T,size_t()>::value &&
-           has_method_SerializeToArray<T, bool(void*,size_t)>::value &&
-           has_method_ParseFromArray<T, bool(const void*, size_t)>::value>>
-class StreamPipe {
-private:
-  size_t length;
-};
-
 template<typename T>
 struct RingPipeMeta {
   using type = T;
@@ -75,7 +68,6 @@ struct RingPipeMeta {
   uint8_t* pipe;
   uint32_t* rw_head;
   size_t length;
-  size_t msgSize;
 };
 
 template<typename T,
@@ -90,7 +82,6 @@ public:
       .pipe = pipe(),
       .rw_head = &rw_head_[0],
       .length = length(),
-      .msgSize = msgSize()
     };
 
     return meta;
@@ -102,18 +93,16 @@ public:
   ASSERT(begin_addr_ <= ADDR && ADDR < end_addr_, "INVALID PIPE ADDRESS")
 
   RingPipe(const T& message, size_t length):
-    pipe_       {std::make_unique<uint8_t[]>(message.ByteSizeLong() * length)},
+    pipe_       {std::make_unique<uint8_t[]>(message.ByteSizeLong() * (length == 0 ? 1 : length))},
     rw_head_    {std::make_unique<uint32_t[]>(2)},
-    read_idx_   {&rw_head_[0]},
-    write_idx_  {&rw_head_[1]},
+    r_idx_      {&rw_head_[0]},
+    w_idx_      {&rw_head_[1]},
     begin_      {0},
-    end_        {static_cast<uint32_t>(length)},
+    end_        {length == 0 ? 1 : static_cast<uint32_t>(length)},
     begin_addr_ {pipe_.get()},
-    end_addr_   {pipe_.get() + message.ByteSizeLong() * length},
-    msgSize_    {message.ByteSizeLong()},
-    length_     {length} {
+    end_addr_   {pipe_.get() + (length == 0 ? 1 : length)},
+    length_     {length == 0 ? 1 : length} {
 
-    ASSERT(IS_ALIGNED(pipe_.get(), msgSize_));
     memset(pipe_.get(), 0, message.ByteSizeLong() * length);
     memset(rw_head_.get(), 0, sizeof(uint32_t) * 2);
   }
@@ -124,23 +113,17 @@ public:
   RingPipe(RingPipe&& other):
     pipe_       {std::move(other.pipe_)},
     rw_head_    {std::move(other.rw_head_)},
-    read_idx_   {other.read_idx_},
-    write_idx_  {other.write_idx_},
+    r_idx_      {other.r_idx_},
+    w_idx_      {other.w_idx_},
     begin_      {other.begin_},
-
     end_        {
       other.length_ < UINT32_MAX ?
       static_cast<decltype(end_)>(other.length_) :
       UINT32_MAX
     },
-
     begin_addr_ {other.begin_addr_},
     end_addr_   {other.end_addr_},
-    msgSize_    {other.msgSize_},
-    length_     {other.length_} {
-
-
-  }
+    length_     {other.length_} {}
 
   RingPipe& operator=(RingPipe&& other) {
     this->pipe_ = std::move(other.pipe_);
@@ -148,8 +131,8 @@ public:
     this->rw_head_[0] = other.rw_head_[0];
     this->rw_head_[1] = other.rw_head_[1];
 
-    this->read_idx_ = other.read_idx_;
-    this->write_idx_ = other.write_idx_;
+    this->r_idx_ = other.r_idx_;
+    this->w_idx_ = other.w_idx_;
 
     this->begin_ = other.begin_;
     this->end_ = other.end_;
@@ -157,14 +140,9 @@ public:
     this->begin_addr_ = other.begin_addr_;
     this->end_addr_ = other.end_addr_;
 
-    this->msgSize_ = other.msgSize_;
     this->length_ = other.length_;
 
     return *this;
-  }
-
-  size_t msgSize() const {
-    return msgSize_;
   }
 
   size_t length() const {
@@ -175,49 +153,79 @@ public:
     return pipe_.get();
   }
 
-  std::optional<T> read() EXCLUDES(read_mutex_) {
-    std::lock_guard<std::mutex> lock{read_mutex_};
+  template<bool blocked = true,
+           bool consecutive = false,
+           typename = std::enable_if_t<blocked>>
+  std::optional<T> read() EXCLUDES(r_mutex_) {
+    std::lock_guard<std::mutex> lock{r_mutex_};
 
-    auto message = peekWithoutSync();
-    if (message.has_value()) {
-      *read_idx_ = next(*read_idx_);
+    // Precondition Check
+    ASSERT_VALIDITY_OF_IDX(*r_idx_);
+
+    if (isEmpty()) {
+      if (!blocked) return std::nullopt;
+      else {
+        waitUntilNonEmpty();
+      }
     }
 
-    return message;
+    uint8_t* slot_to_read = addrOfIdx(*r_idx_);
+    ASSERT_VALIDITY_OF_ADDR(slot_to_read);
+
+    uint8_t bytes_to_read = *slot_to_read;
+    ASSERT(bytes_to_read > 0,
+           "Read zero bytes from non-empty buffer is trivial");
+
+    if (!blocked && UnreadBytesInBuffer() < bytes_to_read) {
+      return std::nullopt;
+    }
+
+    slot_to_read = addrOffset(slot_to_read, 1);
+    updateIdx<R_IDX>(slot_to_read);
+
+    return readFromBuffer<consecutive>(slot_to_read, bytes_to_read);
   }
 
-  std::optional<T> peek() EXCLUDES(read_mutex_) {
-    std::lock_guard<std::mutex> lock{read_mutex_};
-    return peekWithoutSync();
-  }
+  template<bool blocked = true,
+           bool consecutive = false,
+           typename = std::enable_if_t<blocked>>
+  bool write(const T& message) EXCLUDES(w_mutex_) {
+    std::lock_guard<std::mutex> lock{w_mutex_};
 
-  bool write(const T& message) EXCLUDES(write_mutex_) {
-    std::lock_guard<std::mutex> lock{write_mutex_};
+    ASSERT_VALIDITY_OF_IDX(*w_idx_);
 
-    if (isFull()) {
+    size_t bytes_to_write = message.ByteSizeLong();
+    ASSERT(bytes_to_write < UINT8_MAX);
+
+    if (bytes_to_write <= 0) {
+      return true;
+    } else if (bytes_to_write > UINT8_MAX) {
       return false;
     }
 
-    ASSERT_VALIDITY_OF_IDX(*write_idx_);
+    if (!blocked && FreedBytesInBuffer() < bytes_to_write) {
+      return false;
+    } else {
+      waitUntilNonFull();
+    }
 
-    uint8_t* slot_to_write = addrOfIdx(*write_idx_);
-    ASSERT_VALIDITY_OF_ADDR(slot_to_write);
+    uint8_t* current = addrOfIdx(*w_idx_);
+    // Write Byte indicator
+    *current = static_cast<uint8_t>(bytes_to_write);
+    current = addrOffset(current, 1);
+    updateIdx<W_IDX>(current);
 
-    message.SerializeToArray(slot_to_write, msgSize_);
-    *write_idx_ = next(*write_idx_);
+    // Write message into buffer
+    writeIntoBuffer<consecutive>(message, current);
     return true;
   }
 
   bool isEmpty() const NO_THREAD_SAFETY_ANALYSIS {
-    return *read_idx_ == *write_idx_;
+    return *r_idx_ == *w_idx_;
   }
 
   bool isFull() const NO_THREAD_SAFETY_ANALYSIS {
-    return length_ == 0 || next(*write_idx_) == *read_idx_;
-  }
-
-  uint8_t* addrOfIdx(uint32_t idx) {
-    return const_cast<uint8_t*>(begin_addr_ + (idx * msgSize_));
+    return length_ == 0 || next(*w_idx_) == *r_idx_;
   }
 
 private:
@@ -228,6 +236,33 @@ private:
           ::NODE_NATIVE_SPACE
           ::CODEGEN
           ::AsyncStructMapping<RingPipe<T>>;
+
+  enum RW_HEAD {
+    R_IDX,
+    W_IDX,
+  };
+
+  uint8_t* addrOfIdx(uint32_t idx) {
+    return const_cast<uint8_t*>(begin_addr_ + idx);
+  }
+
+  uint32_t IdxOfAddr(uint8_t* addr) {
+    ASSERT_VALIDITY_OF_ADDR(addr);
+    return addr - begin_addr_;
+  }
+
+  template<RW_HEAD head, typename = std::enable_if_t<head == R_IDX>,
+           typename = int>
+  void updateIdx(uint8_t* addr) REQUIRES(r_mutex_) {
+    *r_idx_ = IdxOfAddr(addr);
+    cv_.notify_one();
+  }
+
+  template<RW_HEAD head, typename = std::enable_if_t<head == W_IDX>>
+  void updateIdx(uint8_t* addr) REQUIRES(w_mutex_) {
+    *w_idx_ = IdxOfAddr(addr);
+    cv_.notify_one();
+  }
 
   uint32_t next(uint32_t current) const {
     ASSERT_VALIDITY_OF_IDX(current);
@@ -240,28 +275,199 @@ private:
     }
   }
 
-  std::optional<T> peekWithoutSync() NO_THREAD_SAFETY_ANALYSIS {
-    if (isEmpty()) {
-      return std::nullopt;
+  uint8_t* addrOffset(uint8_t* addr, size_t offset) {
+    ASSERT_VALIDITY_OF_ADDR(addr);
+    ASSERT(end_addr_ - addr - 1 >= 0);
+
+    if ((end_addr_ - addr - 1) >= offset) {
+      return addr + offset;
+    } else {
+      return begin_addr_ + (offset - (end_addr_ - addr - 1)) - 1;
+    }
+  }
+
+  void waitUntilNonFull() EXCLUDES(cv_mutex_) {
+    size_t duration = 1;
+
+    while (isFull()) {
+      std::unique_lock lock(cv_mutex_);
+      cv_.wait_for(lock,
+                   std::chrono::milliseconds(duration),
+                   [&]{ return !isFull(); });
+      duration = std::min(
+        duration << 2,
+        static_cast<decltype(duration * 2)>(10));
+    }
+  }
+
+  void waitUntilNonEmpty() EXCLUDES(cv_mutex_) {
+    size_t duration = 1;
+
+    while (isEmpty()) {
+      std::unique_lock lock(cv_mutex_);
+      cv_.wait_for(lock,
+                   std::chrono::milliseconds(1),
+                   [&]{ return !isEmpty(); });
+      duration = std::min(
+        duration << 2,
+        static_cast<decltype(duration * 2)>(10));
+    }
+  }
+
+  size_t UnreadBytesInBuffer() const NO_THREAD_SAFETY_ANALYSIS {
+    uint32_t r_idx_v = *r_idx_;
+    uint32_t w_idx_v = *w_idx_;
+
+    if (r_idx_v > w_idx_v) {
+      return length_ - (r_idx_v - w_idx_v);
+    } else {
+      return w_idx_v - r_idx_v;
+    }
+  }
+
+  size_t FreedBytesInBuffer() const {
+    return length() - UnreadBytesInBuffer() - 1;
+  }
+
+  size_t FreeBytesToEnd(uint8_t* addr) const {
+    ASSERT_VALIDITY_OF_ADDR(addr);
+    return end_addr_ - addr - 1;
+  }
+
+  size_t UnreadBytesToEnd(uint8_t* addr) const {
+    ASSERT_VALIDITY_OF_ADDR(addr);
+    return end_addr_ - addr;
+  }
+
+  template<bool consecutive = false,
+           typename = std::enable_if_t<!consecutive>>
+  bool writeIntoBuffer(const T& message, uint8_t* current)
+    REQUIRES(w_mutex_) {
+
+    size_t bytes_to_write = message.ByteSizeLong(),
+      remain = bytes_to_write;
+    std::unique_ptr<uint8_t[]> msg_buffer =
+      std::make_unique<uint8_t[]>(bytes_to_write);
+    message.SerializeToArray(msg_buffer.get(), bytes_to_write);
+
+    uint8_t* msg_buffer_current = msg_buffer.get();
+
+    while (remain > 0) {
+      size_t writable = std::min(
+        FreedBytesInBuffer(), remain);
+      if (writable == 0) {
+        waitUntilNonFull();
+        continue;
+      }
+
+      ASSERT(msg_buffer.get() <= msg_buffer_current &&
+             msg_buffer_current < msg_buffer.get() + bytes_to_write);
+
+      if (writable <= FreeBytesToEnd(current)) {
+        writeConsecutive(&current, &msg_buffer_current, writable);
+      } else {
+        writeCrossEnd(&current, &msg_buffer_current, writable);
+      }
+
+      updateIdx<W_IDX>(current);
+      remain -= writable;
     }
 
-    ASSERT_VALIDITY_OF_IDX(*read_idx_);
+    return true;
+  }
 
-    uint8_t* slot_to_peek = addrOfIdx(*read_idx_);
-    ASSERT_VALIDITY_OF_ADDR(slot_to_peek);
+  void writeConsecutive(uint8_t** current,
+                        uint8_t** msg_buffer,
+                        size_t writable) REQUIRES(w_mutex_) {
+    uint8_t* ptr = *current, *msg_ptr = *msg_buffer;
+
+    memcpy(ptr, msg_ptr, writable);
+    *current = addrOffset(*current, writable);
+    *msg_buffer = msg_ptr + writable;
+  }
+
+  void writeCrossEnd(uint8_t** current,
+                     uint8_t** msg_buffer,
+                     size_t writable) REQUIRES(w_mutex_) {
+    uint8_t* ptr = *current, *msg_ptr = *msg_buffer;
+
+    size_t bytes_to_write_1 = end_addr_ - ptr,
+      bytes_to_write_2 = writable - bytes_to_write_1;
+    memcpy(ptr, msg_ptr, bytes_to_write_1);
+    memcpy(begin_addr_, msg_ptr + bytes_to_write_1,
+           bytes_to_write_2);
+    *current = addrOffset(ptr, writable);
+    *msg_buffer = msg_ptr + writable;
+  }
+
+  void readCrossEnd(uint8_t** current,
+                    uint8_t** msg_buffer_pos,
+                    size_t readable) {
+    uint8_t* current_ptr = *current,
+      *msg_buffer_pos_ptr = *msg_buffer_pos;
+
+    size_t read_bytes_1 = end_addr_ - current_ptr,
+      read_bytes_2 = readable - read_bytes_1;
+
+    memcpy(msg_buffer_pos_ptr, current_ptr, read_bytes_1);
+    memcpy(msg_buffer_pos_ptr + read_bytes_1, begin_addr_, read_bytes_2);
+
+    *current = addrOffset(*current, readable);
+    *msg_buffer_pos = msg_buffer_pos_ptr + readable;
+  }
+
+  template<bool consecutive = false,
+           typename = std::enable_if_t<consecutive>,
+           typename = int>
+  bool writeIntoBuffer(const T& message, uint8_t* current)
+    REQUIRES(w_mutex_) {
+    return true;
+  }
+
+  template<bool consecutive = false,
+           typename = std::enable_if_t<!consecutive>>
+  std::optional<T> readFromBuffer(uint8_t* current, size_t bytes_to_read)
+    REQUIRES(r_mutex_) {
+
+    std::unique_ptr<uint8_t[]> msg_buffer =
+      std::make_unique<uint8_t[]>(bytes_to_read);
+    uint8_t* msg_buffer_pos = msg_buffer.get();
+
+    size_t remain = bytes_to_read;
+    while (remain > 0) {
+      size_t readable_bytes = std::min(
+        UnreadBytesInBuffer(), remain);
+      if (readable_bytes == 0) {
+        waitUntilNonEmpty();
+        continue;
+      }
+
+      if (UnreadBytesToEnd(current) > readable_bytes) {
+        memcpy(msg_buffer_pos, current, readable_bytes);
+        current = addrOffset(current, readable_bytes);
+        msg_buffer_pos += readable_bytes;
+      } else {
+        readCrossEnd(&current, &msg_buffer_pos, readable_bytes);
+      }
+
+      updateIdx<R_IDX>(current);
+      remain -= readable_bytes;
+    }
 
     T message;
-    message.ParseFromArray(slot_to_peek, msgSize_);
-
-    return message;
+    if (!message.ParseFromArray(msg_buffer.get(), bytes_to_read)) {
+      return std::nullopt;
+    } else {
+      return message;
+    }
   }
 
   std::unique_ptr<uint8_t[]> pipe_;
   std::unique_ptr<uint32_t[]> rw_head_;
   // Reference rw_head_[0];
-  uint32_t* read_idx_  GUARDED_BY(read_mutex_);
+  uint32_t* r_idx_  GUARDED_BY(r_mutex_);
   // Reference rw_head_[1];
-  uint32_t* write_idx_ GUARDED_BY(write_mutex_);
+  uint32_t* w_idx_ GUARDED_BY(w_mutex_);
 
   uint32_t begin_;
   uint32_t end_;
@@ -269,13 +475,14 @@ private:
   uint8_t* begin_addr_;
   uint8_t* end_addr_;
 
-  // Size of message in pipe
-  size_t msgSize_;
-  // Number of messages in pipe
+  // Length of buffer
   size_t length_;
 
-  std::mutex read_mutex_;
-  std::mutex write_mutex_;
+  std::mutex r_mutex_;
+  std::mutex w_mutex_;
+
+  std::mutex cv_mutex_;
+  std::condition_variable cv_;
 
   #undef ASSERT_VALIDITY_OF_IDX
   #undef ASSERT_VALIDITY_OF_ADDR
@@ -302,10 +509,6 @@ public:
 
   std::optional<T> read() {
     return in_->read();
-  }
-
-  std::optional<T> peek() {
-    return in_->peek();
   }
 
   bool readable() const {
@@ -369,10 +572,6 @@ public:
 
   std::optional<T> read() {
     return in_.read();
-  }
-
-  std::optional<T> peek() {
-    return in_.peek();
   }
 
   bool readable() const {
