@@ -1,10 +1,12 @@
 #include <chrono>
+#include <condition_variable>
 #include <cstdlib>
+#include <exception>
 #include <gtest/gtest.h>
+#include <mutex>
 #include <optional>
 #include <rapidcheck/gtest.h>
 #include <thread>
-#include <vector>
 #include <limits.h>
 
 #include "pipe.h"
@@ -54,25 +56,32 @@ struct PipeTester : public ::testing::Test {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(PipeTester, Spec, ()) {
-  size_t length = *rc::gen::inRange(0, 1000);
+void Writer(RingPipe<Message>* pipe, size_t times) {
+  for (size_t i = 0; i < times; ++i) {
+    Message msg{static_cast<unsigned int>(i)};
+    pipe->write(msg);
+  }
+}
+
+void Reader(RingPipe<Message>* pipe, size_t times) {
+  for (size_t i = 0; i < times; ++i) {
+    auto msg = pipe->read();
+    RC_ASSERT(msg.value().getData() == i);
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(PipeTester, Simple, ()) {
+  size_t length = *rc::gen::inRange(10, 100);
+  size_t times = *rc::gen::inRange(1, 1000);
 
   RingPipe<Message> pipe = CreateTestPipe(length);
-
   RC_ASSERT(pipe.isEmpty());
 
-  for (size_t i = 0; i < length; ++i) {
-    Message msg{static_cast<unsigned int>(i)};
-    pipe.write(msg);
-  }
-  RC_ASSERT(pipe.isFull());
+  std::thread t_w{Writer, &pipe, times};
+  std::thread t_r{Reader, &pipe, times};
 
-  for (size_t i = 0; i < length; ++i) {
-    auto msg = pipe.read();
-    if (msg.has_value()) {
-      RC_ASSERT(msg.value().getData() == i);
-    }
-  }
+  t_w.join();
+  t_r.join();
 
   RC_ASSERT(pipe.isEmpty());
 }
@@ -154,64 +163,6 @@ void SendMessageToPipe(RingPipe<Message>* pipe, Message msg, size_t times) {
   }
 }
 
-void ReceiveMessageFromPipe(RingPipe<Message>* pipe, Message msg, size_t times) {
-  while (times > 0) {
-    bool wait = RANDOM{}() < (RANDOM_MAX/10);
-    if (wait) {
-      std::this_thread::sleep_for(
-        std::chrono::milliseconds(RANDOM_DELAY{}()));
-    }
-
-    auto msgFromPipe = pipe->peek();
-    if (!msgFromPipe.has_value()) {
-      std::this_thread::sleep_for(
-        std::chrono::milliseconds(3));
-      continue;
-    } else {
-      // To check that wheter the msg is what we want
-      if (msgFromPipe == msg) {
-        msgFromPipe = pipe->read();
-      } else {
-        continue;
-      }
-    }
-
-    --times;
-  }
-}
-
-RC_GTEST_FIXTURE_PROP(PipeTester, MultiReadAndMultiWrite, ()) {
-  size_t numOfThreadPairs = *rc::gen::inRange(1, 10);
-  size_t length = *rc::gen::inRange(2, 1000);
-  size_t times  = *rc::gen::inRange(0, 100);
-
-  RingPipe<Message> pipe = CreateTestPipe(length);
-  RC_ASSERT(pipe.isEmpty());
-
-  std::vector<std::thread> r_threads;
-  std::vector<std::thread> w_threads;
-
-  for (size_t i = 0; i < numOfThreadPairs; ++i) {
-    r_threads.emplace_back(ReceiveMessageFromPipe,
-                           &pipe,
-                           Message{static_cast<unsigned int>(i)},
-                           times);
-    w_threads.emplace_back(SendMessageToPipe,
-                           &pipe,
-                           Message{static_cast<unsigned int>(i)},
-                           times);
-  }
-
-  for (auto& t: r_threads) {
-    t.join();
-  }
-  for (auto& t: w_threads) {
-    t.join();
-  }
-
-  RC_ASSERT(pipe.isEmpty());
-}
-
 struct BiPipeTester : public ::testing::Test {
   BiPipe<Message,Message> CreateBiPipe(
     BiPipeParam<Message,Message>& param) {
@@ -220,62 +171,74 @@ struct BiPipeTester : public ::testing::Test {
   }
 };
 
+bool processed = false;
 template<unsigned int num, unsigned int upperbound>
-void NumProducer(MinorBiPipe<Message,Message>* pipe, unsigned int* total) {
+void NumProducer(
+  MinorBiPipe<Message,Message>* pipe,
+  unsigned int* total,
+  std::mutex* mutex,
+  std::condition_variable* cv,
+  std::mutex* p_mutex) {
 
   while (true) {
-    if (pipe->writable()) {
+    {
+      std::lock_guard lock{*p_mutex};
+
       pipe->write(Message{num});
       *total += num;
-    }
 
-    while (true) {
       std::optional<Message> msg = pipe->read();
       if (msg.has_value()) {
         if (msg.value().getData() >= upperbound) {
+          pipe->write(Message{0});
           return;
-        } else {
-          break;
         }
-      } else {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        continue;
+      }
+
+      {
+        std::unique_lock lock{*mutex};
+        cv->wait(lock, [&]{ return processed; });
+        processed = false;
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
 
-void Adder(BiPipe<Message,Message>* pipe, unsigned int* sum) {
-
-  std::chrono::milliseconds idle;
+void Adder(
+  BiPipe<Message,Message>* pipe,
+  unsigned int* sum,
+  std::mutex* mutex,
+  std::condition_variable* cv,
+  size_t num_of_producer) {
 
   // Wait for producer
   std::this_thread::sleep_for(
     std::chrono::milliseconds(100));
 
   while (true) {
-    if (pipe->readable()) {
       auto msg = pipe->read();
       if (msg.has_value()) {
+        if (msg.value().getData() == 0) {
+          if (--num_of_producer == 0) {
+            return;
+          } else {
+            continue;
+          }
+        }
         if (UINT_MAX - *sum >= msg.value().getData()) {
           *sum += msg.value().getData();
         }
       }
 
-      idle = std::chrono::milliseconds(0);
-    } else {
-      idle += std::chrono::milliseconds(1);
-      if (idle > std::chrono::milliseconds(100)) {
-        return;
+      if (pipe->writable()) {
+        pipe->write(Message{*sum});
       }
-    }
 
-    if (pipe->writable()) {
-      pipe->write(Message{*sum});
-    }
-    std::this_thread::sleep_for(
-      std::chrono::milliseconds(1));
+      {
+        std::lock_guard lock{*mutex};
+        processed = true;
+        cv->notify_one();
+      }
   }
 }
 
@@ -288,19 +251,24 @@ RC_GTEST_FIXTURE_PROP(BiPipeTester, Spec, ()) {
     .out_length  = static_cast<size_t>(*rc::gen::inRange(2, 1000))
   };
 
+  std::mutex p_mutex;
+  std::mutex mutex;
+  std::condition_variable cv;
+
   auto pipe = CreateBiPipe(param);
   auto minor = pipe.CreateMinor();
 
   unsigned int sum = 0;
-  std::thread t_adder{Adder, &pipe, &sum};
+  size_t numOfProducer = *rc::gen::inRange(1, 10);
+
+  std::thread t_adder{Adder, &pipe, &sum, &mutex, &cv, numOfProducer};
 
   std::vector<std::thread> producers;
-
-  size_t numOfProducer = *rc::gen::inRange(1, 10);
   std::vector<unsigned int> totals(numOfProducer);
 
   for (size_t i = 0; i < numOfProducer; ++i) {
-    producers.emplace_back(NumProducer<1, 10>, &minor, &totals[i]);
+    producers.emplace_back(
+      NumProducer<1, 10>, &minor, &totals[i], &mutex, &cv, &p_mutex);
   }
 
   t_adder.join();

@@ -11,7 +11,6 @@ int main() {
   char* bytes = new char(counter.ByteSizeLong());
   counter.SerializeToArray(bytes, counter.ByteSizeLong());
 
-
   Counter counter_copy;
   counter_copy.ParseFromArray(bytes, 2);
 
