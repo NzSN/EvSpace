@@ -3,6 +3,12 @@
 
 #include <random>
 
+#define GET_MACRO_1(_0, _1, _NAME, ...) _NAME
+#define GET_MACRO_2(_0, _1, _2, _NAME, ...) _NAME
+#define GET_MACRO_3(_0, _1, _2, _3, _NAME, ...) _NAME
+#define GET_MACRO_4(_0, _1, _2, _3, _4, _NAME, ...) _NAME
+#define GET_MACRO_5(_0, _1, _2, _3, _4, _5, _NAME, ...) _NAME
+
 #define IS_ALIGNED(ADDRESS, BYTE_COUNT) \
     (((uintptr_t)(const void *)(ADDRESS)) % (BYTE_COUNT) == 0)
 

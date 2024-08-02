@@ -1,6 +1,12 @@
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@aspect_rules_js//js:defs.bzl", "js_library")
 
+filegroup(
+    name = "message-srcs",
+    srcs = ["messages.h"],
+    visibility = ["//visibility:public"],
+)
+
 js_library(
     name = "counter_proto_js",
     srcs = ["counter.proto"],

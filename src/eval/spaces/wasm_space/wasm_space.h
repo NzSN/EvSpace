@@ -8,6 +8,8 @@
 #include "eval/async/pipe.h"
 #include "eval/basis/basis_declarations.h"
 
+#include "base/utility.h"
+
 namespace em = emscripten;
 namespace async = EVSPACE::ASYNC;
 
@@ -22,22 +24,19 @@ template<typename T>
 struct EmPipeMeta {
   EmPipeMeta(std::string msg_type, async::RingPipe<T>& pipe):
     message_type(msg_type),
-    pipe(em::typed_memory_view(pipe.length() * pipe.msgSize(), pipe.pipe())),
+    pipe(em::typed_memory_view(pipe.length(), pipe.pipe())),
     rw_head{em::typed_memory_view(2, pipe.rw_head_.get())},
-    length{pipe.length()},
-    msgSize{pipe.msgSize()} {}
+    length{pipe.length()} {}
   EmPipeMeta(std::string msg_type, async::RingPipeMeta<T>& meta):
     message_type(msg_type),
-    pipe{em::typed_memory_view(meta.length * meta.msgSize, meta.pipe)},
+    pipe{em::typed_memory_view(meta.length, meta.pipe)},
     rw_head{em::typed_memory_view(2, meta.rw_head)},
-    length{meta.length},
-    msgSize{meta.msgSize} {}
+    length{meta.length} {}
 
   std::string message_type;
   em::val pipe;
   em::val rw_head;
   size_t length;
-  size_t msgSize;
 };
 
 template<typename T, typename U>
@@ -110,9 +109,8 @@ struct CALLING<void(*)(ARGS...)> {
   EMSCRIPTEN_KEEPALIVE TypeMapping<R>::type BASIS##w (__VA_ARGS__)
 #define PRINT_PARA_0(...)
 #define PRINT_PARA_N(...) , __VA_ARGS__
-#define CHOOSE_PRINT_PARA_N(_0, _1, _2, _3, _4, _5, _Name, ...) _Name
 #define PRINT_PARA(...)                         \
-  CHOOSE_PRINT_PARA_N(                          \
+  GET_MACRO_5(                                  \
     _0,                                         \
     ##__VA_ARGS__,                              \
     PRINT_PARA_N,                               \
@@ -135,11 +133,11 @@ struct CALLING<void(*)(ARGS...)> {
       EVSPACE::BASIS::DECL::B /* , is added by PRINT_PARA is nedded */  \
       PARA_NAME(PRINT_PARA));                                           \
   }
-#define SELECT_WAYS_TO_WRAP_BASIS(_1, _2, _NAME, ...) _NAME
-#define WRAP_BASIS(...) \
-  SELECT_WAYS_TO_WRAP_BASIS(\
-    __VA_ARGS__, \
-    AS_WASM_BASIS_C_LINKAGE, \
+#define WRAP_BASIS(...)                                             \
+  GET_MACRO_2(                                                      \
+    _0,                                                             \
+    ##__VA_ARGS__,                                                  \
+    AS_WASM_BASIS_C_LINKAGE,                                        \
     AS_WASM_BASIS_EMBIND)
 #define AS_WASM_BASIS(B, SIGNATURE, PARA_NAME, TYPES, IS_C_LINKAGE) \
   IS_C_LINKAGE(WRAP_BASIS)(B, SIGNATURE, PARA_NAME, TYPES)
@@ -147,8 +145,15 @@ struct CALLING<void(*)(ARGS...)> {
 #define SPAN_WASM_SPACE_FROM_BASIS(BASIS, R, ...) \
   AS_WASM_BASIS(BASIS, R, __VA_ARGS__)
 
-#define SPAWN_EMBINDING(BASIS) \
+#define NO_EMBINDING(BASIS)
+#define DECLARE_EMBINDING(BASIS)                \
   em::function(#BASIS, &BASIS##w);
+#define CHOOSE_EMBINDING_MACRO(...)                               \
+  GET_MACRO_2(_0, ##__VA_ARGS__, NO_EMBINDING, DECLARE_EMBINDING)
+#define DECLARE_EMBINDING_IF_NOT_C_LINKAGE(BASIS, IS_C_LINKAGE) \
+  IS_C_LINKAGE(CHOOSE_EMBINDING_MACRO)(BASIS)
+#define SPAWN_EMBINDING(BASIS, SIGNATURE, PARA_NAME, TYPES, IS_C_LINKAGE) \
+  DECLARE_EMBINDING_IF_NOT_C_LINKAGE(BASIS, IS_C_LINKAGE)
 
 } // CODEGEN
 } // WASM_SPACE

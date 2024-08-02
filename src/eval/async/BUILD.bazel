@@ -12,7 +12,9 @@ filegroup(
 
 cc_library(
     name = "async",
-    hdrs = [":async-hdrs"],
+    hdrs = [":async-hdrs",
+            "//src/eval/async/messages:message-srcs",
+            ],
     deps = ["//src/eval/async/messages:counter_cc_proto",
             "//src/base:base"],
     visibility = ["//visibility:public"],

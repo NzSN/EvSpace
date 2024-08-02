@@ -1,0 +1,15 @@
+#ifndef EVSPACE_EVAL_ASYNC_MESSAGES_MESSAGES_H_
+#define EVSPACE_EVAL_ASYNC_MESSAGES_MESSAGES_H_
+
+namespace EVSPACE {
+namespace ASYNC {
+namespace MESSAGE {
+
+#define DECLARED_MESSAGES(V) \
+  V(Counter)
+
+} // MESSAGE
+} // ASYNC
+} // EVSPACE
+
+#endif /* EVSPACE_EVAL_ASYNC_MESSAGES_MESSAGES_H_ */

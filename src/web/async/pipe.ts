@@ -10,7 +10,6 @@ export interface RingPipeMeta {
     pipe         : Uint8Array;
     rw_head      : Uint32Array;
     length       : number;
-    size         : number;
 }
 export interface BiPipeMeta {
     in  : RingPipeMeta;
@@ -22,7 +21,6 @@ export class RingPipe {
     private _pipe_buffer  : Uint8Array;
     private _rw_head      : Uint32Array;
     private _length       : number;
-    private _size         : number;
     private _begin        : number;
     private _end          : number;
 
@@ -33,7 +31,6 @@ export class RingPipe {
         this._pipe_buffer = this._meta.pipe;
         this._rw_head = this._meta.rw_head;
         this._length = this._meta.length;
-        this._size = this._meta.size;
         this._begin = 0;
         this._end = this._meta.length;
     }
@@ -45,10 +42,6 @@ export class RingPipe {
 
     public async init() {
         this._message = await this.declareMessage(this._meta.message_type);
-    }
-
-    public get size() {
-        return this._size;
     }
 
     public get length() {
@@ -87,18 +80,6 @@ export class RingPipe {
         } else {
             return next_pos;
         }
-    }
-
-    public peek(): Message<{}> | null {
-        if (this.isEmpty()) {
-            return null;
-        }
-
-        const offset = this.read_idx() * this._size;
-        let buffer = this._pipe_buffer.slice(
-            offset, offset + this._size);
-
-        return this._message.decode(buffer);
     }
 
     public read(): any | null {

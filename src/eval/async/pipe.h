@@ -296,7 +296,7 @@ private:
                    [&]{ return !isFull(); });
       duration = std::min(
         duration << 2,
-        static_cast<decltype(duration * 2)>(10));
+        static_cast<decltype(duration)>(10));
     }
   }
 
