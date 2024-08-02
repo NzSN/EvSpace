@@ -29,7 +29,7 @@ test("WASM Version", async () => {
     const mod = await Module();
     expect(mod != undefined).toBeTruthy();
 
-    let size = 12
+    let size = 12;
     let poly = new Float64Array(size);
     for (let i = 0; i < size; ++i) {
         poly[i] = size - i;

@@ -23,18 +23,6 @@ namespace SPACE {
 namespace WASM_SPACE {
 namespace CODEGEN {
 
-#define DECLARE_PIPE_META(MSG)                                    \
-  em::class_<EmPipeMeta<MSG>>("EmPipeMeta")                   \
-    .property("message_type", &EmPipeMeta<MSG>::message_type) \
-    .property("pipe", &EmPipeMeta<MSG>::pipe)                 \
-    .property("rw_head", &EmPipeMeta<MSG>::rw_head)           \
-    .property("length", &EmPipeMeta<MSG>::length);            \
-                                                                  \
-  em::class_<EmBiPipeMeta<MSG,MSG>>("EmBiPipeMeta")       \
-    .property("in", &EmBiPipeMeta<MSG, MSG>::out_meta)    \
-    .property("out", &EmBiPipeMeta<MSG, MSG>::in_meta);
-
-
 DECLARED_BASISES(SPAN_WASM_SPACE_FROM_BASIS);
 
 EMSCRIPTEN_BINDINGS(WasmSpace) {

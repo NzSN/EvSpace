@@ -9,6 +9,7 @@
 #include <tuple>
 
 #include "eval/async/pipe.h"
+#include "base/utility.h"
 
 #define NAPI_DISABLE_CPP_EXCEPTIONS
 #include <napi.h>
@@ -98,6 +99,31 @@ struct AsyncStructMapping {
 };
 template<typename T>
 struct AsyncStructMapping<async::RingPipeMeta<T>> {
+  static Napi::Value notify_one(const Napi::CallbackInfo& info) {
+    if (!info[0].IsObject()) {
+      Napi::Error::New(info.Env(), "Wrong argument");
+      return info.Env().Undefined();
+    }
+
+    Napi::Object obj = info[0].As<Napi::Object>();
+    if (!obj.Has("pipe_addr")) {
+      Napi::Error::New(info.Env(), "Wrong argument");
+      return info.Env().Undefined();
+    }
+
+    auto addr = obj.Get("pipe_addr");
+    Napi::Number addr_num = addr.As<Napi::Number>();
+
+    async::RingPipeMeta<T>* pipe = reinterpret_cast<async::RingPipeMeta<T>*>(
+      addr_num.Int64Value());
+
+    return info.Env().Undefined();
+  }
+
+  static Napi::Value notify_all(const Napi::CallbackInfo& info) {
+
+  }
+
   static Napi::Value mapping(async::RingPipeMeta<T>& meta,
                              const Napi::CallbackInfo& info) {
     auto object = Napi::Object::New(info.Env());
@@ -106,10 +132,10 @@ struct AsyncStructMapping<async::RingPipeMeta<T>> {
     object.Set("message_type", Napi::String::New(info.Env(), "Counter"));
 
     Napi::ArrayBuffer pipe_buffer = Napi::ArrayBuffer::New(
-      info.Env(), meta.pipe, meta.msgSize * meta.length);
+      info.Env(), meta.pipe, meta.length);
     Napi::Uint8Array array = Napi::Uint8Array
       ::New(info.Env(),
-            meta.msgSize * meta.length,
+            meta.length,
             pipe_buffer, 0);
     object.Set("pipe", array);
 
@@ -118,12 +144,17 @@ struct AsyncStructMapping<async::RingPipeMeta<T>> {
     Napi::Uint32Array rw_head = Napi::Uint32Array
       ::New(info.Env(), 2, rw_head_buffer, 0);
     object.Set("rw_head", rw_head);
-
     object.Set("length", Napi::Number::New(info.Env(), meta.length));
-    object.Set("size", Napi::Number::New(info.Env(), meta.msgSize));
+
+    ASSERT(sizeof(meta.instance) == sizeof(int64_t));
+    object.Set("pipe_addr", Napi::Number::New(info.Env(), meta.instance));
+
+    object.Set("notify_one", Napi::Function::New<notify_one>(info.Env()));
+    object.Set("notify_all", Napi::Function::New<notify_all>(info.Env()));
 
     return object;
   }
+
 };
 template<typename T>
 struct AsyncStructMapping<EVSPACE::ASYNC::SymPipeMeta<T>> {
@@ -406,7 +437,6 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
   return EvalFlat<FN, std::tuple<Ts...>, NodeTypes<Ts...>>::eval(fn, t, info);
 }
 
-#define NUM_OF_PARAM(_1, _2, _3, _4, _5, _NAME, ...) _NAME
 #define NATIVE_TUPLE_RECEIVER __NAT_TUPLE
 #define AS_NATIVES(BASIS, R, ...)                                       \
   auto NATIVE_TUPLE_RECEIVER = CODEGEN::AsNatives<                      \
@@ -420,27 +450,33 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
   /* Base Case: Do nothing */
 #define PARAM_TRANS_IMPL_N(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPES) \
   PARA_TYPES(AS_NATIVES)
-#define SELECT_BY_NUM_OF_PARAM(_1, _2, _3, _4, _5, _NAME, ...)  \
-  PARAM_TRANS_IMPL_##_NAME
 #define PARAM_TRANS_IMPL(...)                           \
-  SELECT_BY_NUM_OF_PARAM(__VA_ARGS__, N, N, N, N, N, 0)
+  GET_MACRO_5(          \
+    _0,                 \
+    ##__VA_ARGS__,      \
+    PARAM_TRANS_IMPL_N, \
+    PARAM_TRANS_IMPL_N, \
+    PARAM_TRANS_IMPL_N, \
+    PARAM_TRANS_IMPL_N, \
+    PARAM_TRANS_IMPL_N, \
+    PARAM_TRANS_IMPL_0)
 
 #define EVAL_WITH_ARGS(B, R, ...) \
   return CODEGEN::Eval<R(*)(__VA_ARGS__), __VA_ARGS__>( \
     EVSPACE::BASIS::DECL::B, NATIVE_TUPLE_RECEIVER.value(), info)
 #define EVAL_WITHOUT_ARGS(B, R, ...) \
   return CODEGEN::Eval<R(*)()>( \
-    EVSPACE::BASIS::DECL::B, NATIVE_TUPLE_RECEIVER.value(), info)
-#define CHOOSE_EVAL(_0, _1, _2, _3, _4, _5, _NAME, ...) _NAME
+    EVSPACE::BASIS::DECL::B, std::tuple{}, info)
 #define EVAL(B, R, ...)       \
-  CHOOSE_EVAL(_0,             \
-              ##__VA_ARGS__,    \
-              EVAL_WITH_ARGS, \
-              EVAL_WITH_ARGS, \
-              EVAL_WTIH_ARGS, \
-              EVAL_WITH_ARGS,  \
-              EVAL_WITH_ARGS,  \
-              EVAL_WITHOUT_ARGS)(B, R, __VA_ARGS__)
+  GET_MACRO_5(                \
+    _0,                       \
+    ##__VA_ARGS__,            \
+    EVAL_WITH_ARGS,           \
+    EVAL_WITH_ARGS,            \
+    EVAL_WTIH_ARGS,            \
+    EVAL_WITH_ARGS,            \
+    EVAL_WITH_ARGS,                             \
+    EVAL_WITHOUT_ARGS)(B, R, __VA_ARGS__)
 
 
 #define NODE_NATIVE_WRAPPER_PARAM_TRANS(        \

@@ -20,23 +20,49 @@ namespace SPACE {
 namespace WASM_SPACE {
 namespace CODEGEN {
 
+#define DECLARE_PIPE_META(MSG)                                \
+  em::class_<EmPipeMeta<MSG>>("EmPipeMeta")                   \
+    .property("message_type", &EmPipeMeta<MSG>::message_type) \
+    .property("pipe", &EmPipeMeta<MSG>::pipe)                 \
+    .property("rw_head", &EmPipeMeta<MSG>::rw_head)           \
+    .property("length", &EmPipeMeta<MSG>::length)             \
+    .function("notify_one", &EmPipeMeta<MSG>::notify_one)     \
+    .function("notify_all", &EmPipeMeta<MSG>::notify_all);    \
+                                                              \
+  em::class_<EmBiPipeMeta<MSG,MSG>>("EmBiPipeMeta")           \
+    .property("in", &EmBiPipeMeta<MSG, MSG>::out_meta)        \
+    .property("out", &EmBiPipeMeta<MSG, MSG>::in_meta);
+
+
 template<typename T>
 struct EmPipeMeta {
   EmPipeMeta(std::string msg_type, async::RingPipe<T>& pipe):
     message_type(msg_type),
     pipe(em::typed_memory_view(pipe.length(), pipe.pipe())),
     rw_head{em::typed_memory_view(2, pipe.rw_head_.get())},
-    length{pipe.length()} {}
+    length{pipe.length()},
+    instance{&pipe} {}
   EmPipeMeta(std::string msg_type, async::RingPipeMeta<T>& meta):
     message_type(msg_type),
     pipe{em::typed_memory_view(meta.length, meta.pipe)},
     rw_head{em::typed_memory_view(2, meta.rw_head)},
-    length{meta.length} {}
+    length{meta.length},
+    instance{meta.instance} {}
+
+  void notify_one() {
+    instance->notify_one();
+  }
+
+  void notify_all() {
+    instance->notify_all();
+  }
 
   std::string message_type;
   em::val pipe;
   em::val rw_head;
   size_t length;
+
+  async::RingPipe<T>* instance;
 };
 
 template<typename T, typename U>

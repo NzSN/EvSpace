@@ -54,7 +54,6 @@ struct AsyncStructMapping;
 
 namespace EVSPACE {
 namespace ASYNC {
-
 struct PipeTester;
 
 DEFINE_TRAIT_HAS_METHOD(ByteSizeLong);
@@ -62,13 +61,7 @@ DEFINE_TRAIT_HAS_METHOD(SerializeToArray);
 DEFINE_TRAIT_HAS_METHOD(ParseFromArray);
 
 template<typename T>
-struct RingPipeMeta {
-  using type = T;
-
-  uint8_t* pipe;
-  uint32_t* rw_head;
-  size_t length;
-};
+struct RingPipeMeta;
 
 template<typename T,
          typename = std::enable_if<
@@ -82,6 +75,7 @@ public:
       .pipe = pipe(),
       .rw_head = &rw_head_[0],
       .length = length(),
+      .instance = this,
     };
 
     return meta;
@@ -228,6 +222,16 @@ public:
     return length_ == 0 || next(*w_idx_) == *r_idx_;
   }
 
+  // Primaryly called by function
+  // defined in JS Realm
+  void notify_one() {
+
+    cv_.notify_one();
+  }
+  void notify_all() {
+    cv_.notify_all();
+  }
+
 private:
   friend PipeTester;
   friend EVAL::SPACE::WASM_SPACE::CODEGEN::EmPipeMeta<T>;
@@ -279,7 +283,7 @@ private:
     ASSERT_VALIDITY_OF_ADDR(addr);
     ASSERT(end_addr_ - addr - 1 >= 0);
 
-    if ((end_addr_ - addr - 1) >= offset) {
+    if (static_cast<size_t>(end_addr_ - addr - 1) >= offset) {
       return addr + offset;
     } else {
       return begin_addr_ + (offset - (end_addr_ - addr - 1)) - 1;
@@ -487,6 +491,18 @@ private:
   #undef ASSERT_VALIDITY_OF_IDX
   #undef ASSERT_VALIDITY_OF_ADDR
 };
+
+template<typename T>
+struct RingPipeMeta {
+  using type = T;
+
+  uint8_t* pipe;
+  uint32_t* rw_head;
+  size_t length;
+
+  RingPipe<T>* instance;
+};
+
 
 template<typename T, typename U>
 struct BiPipeParam {
