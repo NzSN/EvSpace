@@ -5,7 +5,7 @@
 #include <chrono>
 
 #include "eval/async/messages/counter.pb.h"
-#include "eval/async/pipe.h"
+#include "eval/async/async.h"
 #include "eval/basis/misc/misc.h"
 
 namespace EVSPACE {
@@ -17,7 +17,7 @@ namespace async = ::EVSPACE::ASYNC;
 
 template<typename T>
 struct Echo : AsyncBasis<T> {
-  static void DoEcho(async::BiPipe<Counter,Counter> pipe) {
+  static void DoEcho(PIPE(T) pipe) {
     Counter counter;
     while (true) {
       if (pipe.readable()) {
@@ -43,21 +43,17 @@ struct Echo : AsyncBasis<T> {
   ASYNCHRONOUS(T) operator()() {
     Counter counter;
     counter.set_counter(1);
-
-    async::BiPipeParam<T,T> param = {
+    ASYNC_PARAM(T) param = {
       .in_message = &counter,
       .in_length = 10,
       .out_message = &counter,
       .out_length = 10,
     };
 
-    async::BiPipe<T,T> pipe(param);
-    ASYNCHRONOUS(T) meta = pipe.generateMeta();
+    auto meta = INIT_ASYNC_STRUCTURE(T, param);
+    BOOTING_ASYNC_THREAD(Echo::DoEcho, std::move(AS_BOOT_ARGS(meta)));
 
-    std::thread t0{Echo::DoEcho, std::move(pipe)};
-    t0.detach();
-
-    return meta;
+    return AS_JS_META(meta);
   }
 
 };

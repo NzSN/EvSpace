@@ -1,5 +1,5 @@
 #include "misc_declarations.h"
-#include "eval/async/pipe.h"
+#include "eval/async/async.h"
 #include "eval/basis/misc/trivial.h"
 
 namespace EVSPACE {

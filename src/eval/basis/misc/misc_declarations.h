@@ -1,6 +1,6 @@
 #include "eval/basis/basis.h"
 #include "trivial.h"
-#include "eval/async/pipe.h"
+#include "eval/async/async.h"
 #include "eval/async/messages/counter.pb.h"
 
 #ifndef EVSPACE_EVAL_BASIS_MISC_MISC_DECLARATIONS_H_

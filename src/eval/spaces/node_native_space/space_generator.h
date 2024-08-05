@@ -97,31 +97,17 @@ struct AsyncStructMapping {
   static_assert(std::integral_constant<bool, false>::value,
     "Not an async structure");
 };
+
 template<typename T>
 struct AsyncStructMapping<async::RingPipeMeta<T>> {
   static Napi::Value notify_one(const Napi::CallbackInfo& info) {
-    if (!info[0].IsObject()) {
-      Napi::Error::New(info.Env(), "Wrong argument");
-      return info.Env().Undefined();
-    }
+    auto* pipe = reinterpret_cast<async::RingPipe<T>*>(info.Data());
 
-    Napi::Object obj = info[0].As<Napi::Object>();
-    if (!obj.Has("pipe_addr")) {
-      Napi::Error::New(info.Env(), "Wrong argument");
-      return info.Env().Undefined();
-    }
-
-    auto addr = obj.Get("pipe_addr");
-    Napi::Number addr_num = addr.As<Napi::Number>();
-
-    async::RingPipeMeta<T>* pipe = reinterpret_cast<async::RingPipeMeta<T>*>(
-      addr_num.Int64Value());
-
-    return info.Env().Undefined();
+    return Napi::Number::New(info.Env(), pipe->length());
   }
 
   static Napi::Value notify_all(const Napi::CallbackInfo& info) {
-
+    return info.Env().Undefined();
   }
 
   static Napi::Value mapping(async::RingPipeMeta<T>& meta,
@@ -146,11 +132,10 @@ struct AsyncStructMapping<async::RingPipeMeta<T>> {
     object.Set("rw_head", rw_head);
     object.Set("length", Napi::Number::New(info.Env(), meta.length));
 
-    ASSERT(sizeof(meta.instance) == sizeof(int64_t));
-    object.Set("pipe_addr", Napi::Number::New(info.Env(), meta.instance));
-
-    object.Set("notify_one", Napi::Function::New<notify_one>(info.Env()));
-    object.Set("notify_all", Napi::Function::New<notify_all>(info.Env()));
+    object.Set("notify_one", Napi::Function::New<notify_one>(
+                 info.Env(), "notify_one", meta.instance));
+    object.Set("notify_all", Napi::Function::New<notify_all>(
+                 info.Env(), "notify_all", meta.instance));
 
     return object;
   }
@@ -442,7 +427,8 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
   auto NATIVE_TUPLE_RECEIVER = CODEGEN::AsNatives<                      \
     __VA_ARGS__>(info);                                                 \
   if (!NATIVE_TUPLE_RECEIVER.has_value()) {                             \
-    Napi::Error::New(info.Env(), "Wrong argument");                     \
+    Napi::Error::New(info.Env(), "Wrong argument")                      \
+      .ThrowAsJavaScriptException();                                    \
     return info.Env().Undefined();                                      \
   }
 

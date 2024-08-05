@@ -16,8 +16,6 @@
 #include "base/thread_safety.h"
 #include "base/traits.h"
 
-#define ASYNCHRONOUS(T) EVSPACE::ASYNC::SymPipeMeta<T>
-
 namespace EVSPACE {
 namespace EVAL {
 namespace SPACE {

@@ -5,7 +5,7 @@
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
-#include "eval/async/pipe.h"
+#include "eval/async/async.h"
 #include "eval/basis/basis_declarations.h"
 
 #include "base/utility.h"

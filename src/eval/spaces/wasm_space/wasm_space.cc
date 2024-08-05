@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <thread>
 #include "wasm_space.h"
-#include "eval/async/pipe.h"
+#include "eval/async/async.h"
 #include <chrono>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>

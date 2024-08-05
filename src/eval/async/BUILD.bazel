@@ -1,12 +1,12 @@
 filegroup(
     name = "async-srcs",
-    srcs = ["pipe.h"],
+    srcs = ["async.h", "pipe.h"],
     visibility = ["//visibility:public"],
 )
 
 filegroup(
     name = "async-hdrs",
-    srcs = ["pipe.h"],
+    srcs = ["async.h", "pipe.h"],
     visibility = ["//visibility:public"],
 )
 
