@@ -84,8 +84,8 @@ public:
 #define ASSERT_VALIDITY_OF_ADDR(ADDR) \
   ASSERT(begin_addr_ <= ADDR && ADDR < end_addr_, "INVALID PIPE ADDRESS")
 
-  RingPipe(const T& message, size_t length):
-    pipe_       {std::make_unique<uint8_t[]>(message.ByteSizeLong() * (length == 0 ? 1 : length))},
+  RingPipe(size_t length):
+    pipe_       {std::make_unique<uint8_t[]>(length == 0 ? 1 : length)},
     rw_head_    {std::make_unique<uint32_t[]>(2)},
     r_idx_      {&rw_head_[0]},
     w_idx_      {&rw_head_[1]},
@@ -95,7 +95,7 @@ public:
     end_addr_   {pipe_.get() + (length == 0 ? 1 : length)},
     length_     {length == 0 ? 1 : length} {
 
-    memset(pipe_.get(), 0, message.ByteSizeLong() * length);
+    memset(pipe_.get(), 0, length);
     memset(rw_head_.get(), 0, sizeof(uint32_t) * 2);
   }
 
@@ -157,7 +157,7 @@ public:
     if (isEmpty()) {
       if (!blocked) return std::nullopt;
       else {
-        waitUntilNonEmpty();
+        waitNonempty();
       }
     }
 
@@ -172,7 +172,7 @@ public:
       return std::nullopt;
     }
 
-    slot_to_read = addrOffset(slot_to_read, 1);
+    slot_to_read = nextN(slot_to_read, 1);
     updateIdx<R_IDX>(slot_to_read);
 
     return readFromBuffer<consecutive>(slot_to_read, bytes_to_read);
@@ -195,16 +195,16 @@ public:
       return false;
     }
 
-    if (!blocked && FreedBytesInBuffer() < bytes_to_write) {
+    if (!blocked && FreeBytesInBuffer() < bytes_to_write) {
       return false;
     } else {
-      waitUntilNonFull();
+      waitNonfull();
     }
 
     uint8_t* current = addrOfIdx(*w_idx_);
     // Write Byte indicator
     *current = static_cast<uint8_t>(bytes_to_write);
-    current = addrOffset(current, 1);
+    current = nextN(current, 1);
     updateIdx<W_IDX>(current);
 
     // Write message into buffer
@@ -223,7 +223,6 @@ public:
   // Primaryly called by function
   // defined in JS Realm
   void notify_one() {
-
     cv_.notify_one();
   }
   void notify_all() {
@@ -277,7 +276,7 @@ private:
     }
   }
 
-  uint8_t* addrOffset(uint8_t* addr, size_t offset) {
+  uint8_t* nextN(uint8_t* addr, size_t offset) {
     ASSERT_VALIDITY_OF_ADDR(addr);
     ASSERT(end_addr_ - addr - 1 >= 0);
 
@@ -288,7 +287,7 @@ private:
     }
   }
 
-  void waitUntilNonFull() EXCLUDES(cv_mutex_) {
+  void waitNonfull() EXCLUDES(cv_mutex_) {
     size_t duration = 1;
 
     while (isFull()) {
@@ -302,7 +301,7 @@ private:
     }
   }
 
-  void waitUntilNonEmpty() EXCLUDES(cv_mutex_) {
+  void waitNonempty() EXCLUDES(cv_mutex_) {
     size_t duration = 1;
 
     while (isEmpty()) {
@@ -327,7 +326,7 @@ private:
     }
   }
 
-  size_t FreedBytesInBuffer() const {
+  size_t FreeBytesInBuffer() const {
     return length() - UnreadBytesInBuffer() - 1;
   }
 
@@ -355,24 +354,24 @@ private:
     uint8_t* msg_buffer_current = msg_buffer.get();
 
     while (remain > 0) {
-      size_t writable = std::min(
-        FreedBytesInBuffer(), remain);
-      if (writable == 0) {
-        waitUntilNonFull();
+      size_t free_bytes_in_buffer = std::min(
+        FreeBytesInBuffer(), remain);
+      if (free_bytes_in_buffer == 0) {
+        waitNonfull();
         continue;
       }
 
       ASSERT(msg_buffer.get() <= msg_buffer_current &&
              msg_buffer_current < msg_buffer.get() + bytes_to_write);
 
-      if (writable <= FreeBytesToEnd(current)) {
-        writeConsecutive(&current, &msg_buffer_current, writable);
+      if (free_bytes_in_buffer <= FreeBytesToEnd(current)) {
+        writeConsecutive(&current, &msg_buffer_current, free_bytes_in_buffer);
       } else {
-        writeCrossEnd(&current, &msg_buffer_current, writable);
+        writeCrossEnd(&current, &msg_buffer_current, free_bytes_in_buffer);
       }
 
       updateIdx<W_IDX>(current);
-      remain -= writable;
+      remain -= free_bytes_in_buffer;
     }
 
     return true;
@@ -384,7 +383,7 @@ private:
     uint8_t* ptr = *current, *msg_ptr = *msg_buffer;
 
     memcpy(ptr, msg_ptr, writable);
-    *current = addrOffset(*current, writable);
+    *current = nextN(*current, writable);
     *msg_buffer = msg_ptr + writable;
   }
 
@@ -398,7 +397,7 @@ private:
     memcpy(ptr, msg_ptr, bytes_to_write_1);
     memcpy(begin_addr_, msg_ptr + bytes_to_write_1,
            bytes_to_write_2);
-    *current = addrOffset(ptr, writable);
+    *current = nextN(ptr, writable);
     *msg_buffer = msg_ptr + writable;
   }
 
@@ -414,7 +413,7 @@ private:
     memcpy(msg_buffer_pos_ptr, current_ptr, read_bytes_1);
     memcpy(msg_buffer_pos_ptr + read_bytes_1, begin_addr_, read_bytes_2);
 
-    *current = addrOffset(*current, readable);
+    *current = nextN(*current, readable);
     *msg_buffer_pos = msg_buffer_pos_ptr + readable;
   }
 
@@ -437,23 +436,23 @@ private:
 
     size_t remain = bytes_to_read;
     while (remain > 0) {
-      size_t readable_bytes = std::min(
+      size_t bytes_in_buffer = std::min(
         UnreadBytesInBuffer(), remain);
-      if (readable_bytes == 0) {
-        waitUntilNonEmpty();
+      if (bytes_in_buffer == 0) {
+        waitNonempty();
         continue;
       }
 
-      if (UnreadBytesToEnd(current) > readable_bytes) {
-        memcpy(msg_buffer_pos, current, readable_bytes);
-        current = addrOffset(current, readable_bytes);
-        msg_buffer_pos += readable_bytes;
+      if (UnreadBytesToEnd(current) > bytes_in_buffer) {
+        memcpy(msg_buffer_pos, current, bytes_in_buffer);
+        current = nextN(current, bytes_in_buffer);
+        msg_buffer_pos += bytes_in_buffer;
       } else {
-        readCrossEnd(&current, &msg_buffer_pos, readable_bytes);
+        readCrossEnd(&current, &msg_buffer_pos, bytes_in_buffer);
       }
 
       updateIdx<R_IDX>(current);
-      remain -= readable_bytes;
+      remain -= bytes_in_buffer;
     }
 
     T message;
@@ -504,10 +503,7 @@ struct RingPipeMeta {
 
 template<typename T, typename U>
 struct BiPipeParam {
-  const T* in_message;
   size_t   in_length;
-
-  const T* out_message;
   size_t   out_length;
 };
 
@@ -568,8 +564,8 @@ public:
   }
 
   BiPipe(BiPipeParam<T,U>& param):
-    in_ {*param.in_message, param.in_length},
-    out_{*param.out_message, param.out_length} {}
+    in_ {param.in_length},
+    out_{param.out_length} {}
   BiPipe(BiPipe<T,U>&& other):
     in_{std::move(other.in_)},
     out_{std::move(other.out_)} {}

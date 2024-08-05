@@ -52,7 +52,7 @@ private:
 
 struct PipeTester : public ::testing::Test {
   RingPipe<Message> CreateTestPipe(size_t length) {
-    return RingPipe<Message>{Message{1}, length};
+    return RingPipe<Message>{length};
   }
 };
 
@@ -243,11 +243,8 @@ void Adder(
 }
 
 RC_GTEST_FIXTURE_PROP(BiPipeTester, Spec, ()) {
-  Message msg_in{1}, msg_out{2};
   BiPipeParam<Message, Message> param = {
-    .in_message  = &msg_in,
     .in_length   = static_cast<size_t>(*rc::gen::inRange(2, 1000)),
-    .out_message = &msg_out,
     .out_length  = static_cast<size_t>(*rc::gen::inRange(2, 1000))
   };
 

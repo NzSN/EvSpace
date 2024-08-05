@@ -102,11 +102,15 @@ template<typename T>
 struct AsyncStructMapping<async::RingPipeMeta<T>> {
   static Napi::Value notify_one(const Napi::CallbackInfo& info) {
     auto* pipe = reinterpret_cast<async::RingPipe<T>*>(info.Data());
+    pipe->notify_one();
 
-    return Napi::Number::New(info.Env(), pipe->length());
+    return info.Env().Undefined();
   }
 
   static Napi::Value notify_all(const Napi::CallbackInfo& info) {
+    auto* pipe = reinterpret_cast<async::RingPipe<T>*>(info.Data());
+    pipe->notify_all();
+
     return info.Env().Undefined();
   }
 
@@ -139,8 +143,8 @@ struct AsyncStructMapping<async::RingPipeMeta<T>> {
 
     return object;
   }
-
 };
+
 template<typename T>
 struct AsyncStructMapping<EVSPACE::ASYNC::SymPipeMeta<T>> {
   static Napi::Value mapping(

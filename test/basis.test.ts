@@ -7,7 +7,7 @@ test("Napi Version", async () => {
 
     console.log(native);
     let meta = native.Echo();
-    console.log(meta);
+    console.log(meta.out.rw_head.buffer);
     await delay(2000);
     console.log(meta);
 

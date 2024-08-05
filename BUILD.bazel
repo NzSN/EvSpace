@@ -25,7 +25,8 @@ ts_project(
             "src/web/platforms.ts",
             "src/web/utility.ts",
             "src/web/async/pipe.ts",
-            "src/web/async/message.ts"],
+            "src/web/async/message.ts",
+            "src/web/base/utility.ts"],
     data = [
         "//src/eval/spaces/node_native_space:node_native_space",
         "//src/eval/spaces/wasm_space:wasm-space-cc",
