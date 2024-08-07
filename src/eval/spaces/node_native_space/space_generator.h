@@ -11,6 +11,7 @@
 #include "eval/async/async.h"
 #include "base/utility.h"
 #include "eval/async/control/control.h"
+#include "eval/async/messages/messages.h"
 #include "eval/async/transfer/pipe.h"
 
 #define NAPI_DISABLE_CPP_EXCEPTIONS
@@ -121,7 +122,9 @@ struct AsyncStructMapping<async::RingPipeMeta<T>> {
     auto object = Napi::Object::New(info.Env());
     // TODO: AsyncStruct itself does not has any information to
     // about the type of what message should oppsite-side should used.
-    object.Set("message_type", Napi::String::New(info.Env(), "Counter"));
+    object.Set("message_type",
+               Napi::String::New(
+                 info.Env(), EVSPACE::ASYNC::MESSAGE::MessageType<T>::msg_type));
 
     Napi::ArrayBuffer pipe_buffer = Napi::ArrayBuffer::New(
       info.Env(), meta.pipe, meta.length);
@@ -162,6 +165,8 @@ struct AsyncStructMapping<EVSPACE::ASYNC::SymPipeMeta<T>> {
 };
 template<>
 struct AsyncStructMapping<EVSPACE::ASYNC::ControlMeta> {
+
+
   static Napi::Value mapping(
     EVSPACE::ASYNC::ControlMeta& meta,
     const Napi::CallbackInfo& info) {

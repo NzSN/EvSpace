@@ -41,8 +41,6 @@ namespace CODEGEN {
   .property("pipe", &EmTaskEnvMeta<MSG>::pipe_meta);
 
 
-
-
 template<typename T>
 struct EmPipeMeta {
   EmPipeMeta(async::RingPipe<T>& pipe):
@@ -77,11 +75,11 @@ struct EmPipeMeta {
 template<typename T, typename U>
 struct EmBiPipeMeta {
   EmBiPipeMeta(async::BiPipe<T, U>& pipe):
-    in_meta{async::MESSAGE::MessageType<T>::msg_type, pipe.in_},
-    out_meta{async::MESSAGE::MessageType<U>::msg_type, pipe.out_} {}
+    in_meta{pipe.in_},
+    out_meta{pipe.out_} {}
   EmBiPipeMeta(async::BiPipeMeta<T, U>& meta):
-    in_meta{async::MESSAGE::MessageType<T>::msg_type, meta.in_meta},
-    out_meta{async::MESSAGE::MessageType<U>::msg_type, meta.out_meta} {}
+    in_meta{meta.in_meta},
+    out_meta{meta.out_meta} {}
 
   EmPipeMeta<T> in_meta;
   EmPipeMeta<U> out_meta;
@@ -113,7 +111,10 @@ template<typename T, typename U>
 struct TypeMapping<async::BiPipeMeta<T, U>> {
   using type = EmBiPipeMeta<T, U>;
 };
-
+template<typename T>
+struct TypeMapping<async::TaskEnvMeta<T>> {
+  using type = EmTaskEnvMeta<T>;
+};
 template<typename T>
 struct Conversion {
   static T conversion(T& t) {
@@ -133,6 +134,14 @@ struct Conversion<async::BiPipeMeta<T,U>> {
   static typename TypeMapping<async::BiPipeMeta<T, U>>::type
   conversion(async::BiPipeMeta<T, U>& meta) {
     return EmBiPipeMeta<T,U>(meta);
+  }
+};
+
+template<typename T>
+struct Conversion<async::TaskEnvMeta<T>> {
+  static typename TypeMapping<async::TaskEnvMeta<T>>::type
+  conversion(async::TaskEnvMeta<T>& meta) {
+    return EmTaskEnvMeta<T>(meta);
   }
 };
 

@@ -1,7 +1,6 @@
 import { Evaluator } from './evaluator';
 import * as basis from "../eval/spaces/node_native_space/node_native_space";
-import { BiPipe, BiPipeMeta } from './async/pipe';
-import { delay } from './utility';
+import { BiPipe, TaskEnvMeta, TaskEnv } from './async/pipe';
 
 export class NativeEvaluator implements Evaluator {
     insertionSort(nums: Float64Array) {
@@ -12,8 +11,9 @@ export class NativeEvaluator implements Evaluator {
     }
 
     async echo<T>(count: number, f: (number) => T): Promise<void> {
-        let pipeMeta: BiPipeMeta = basis.Echo();
-        let pipe: BiPipe = new BiPipe(pipeMeta);
+        let envMeta: TaskEnvMeta = basis.Echo();
+        let env: TaskEnv = new TaskEnv(envMeta);
+        let pipe: BiPipe = env.pipe;
 
         await pipe.init();
 

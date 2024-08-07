@@ -23,5 +23,4 @@ test("Wasm Async", async () => {
 
     let evaluator = await CreateEvaluator(Platform.WASM);
     await evaluator.echo(count, f);
-
 })

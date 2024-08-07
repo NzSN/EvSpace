@@ -22,12 +22,18 @@ export interface BiPipeMeta {
     out : RingPipeMeta;
 }
 
+export interface ControlMeta {}
+
+export interface TaskEnvMeta {
+    control : ControlMeta;
+    pipe    : BiPipeMeta;
+}
+
 interface ReadMeta {
     r_idx: number;
     buffer_idx: number;
     buffer: Uint8Array,
 };
-
 
 export class RingPipe {
     private _message      : MessageType;
@@ -152,11 +158,7 @@ export class RingPipe {
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#browser_compatibility
         if (this.isFull()) {
             await waitFor(() => {
-                return !this.isFull();
-            });
-        }
-    }
-
+                return !this.isFull();});}}
     private async _waitNonempty(): Promise<void> {
         // TODO: Same as waitNonfull()
         if (this.isEmpty()) {
@@ -376,5 +378,17 @@ export class BiPipe {
 
     public writable(): boolean {
         return !this._out.isFull();
+    }
+}
+
+export class Control {}
+
+export class TaskEnv {
+    public control: Control;
+    public pipe: BiPipe;
+
+    constructor(meta: TaskEnvMeta) {
+        this.control = new Control();
+        this.pipe = new BiPipe(meta.pipe);
     }
 }

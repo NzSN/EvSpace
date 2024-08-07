@@ -4,7 +4,11 @@
 namespace EVSPACE {
 namespace ASYNC {
 
-struct ControlMeta {};
+
+
+struct ControlMeta {
+
+};
 
 struct Control {
   ControlMeta generateMeta() {
