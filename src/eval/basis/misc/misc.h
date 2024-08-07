@@ -2,7 +2,7 @@
 #define EVSPACE_EVAL_BASIS_MISC_MISC_H_
 
 #include "eval/basis/basis.h"
-#include "eval/async/pipe.h"
+#include "eval/async/async.h"
 
 namespace EVSPACE {
 namespace EVAL {
