@@ -2,7 +2,7 @@
  * Particularly, you can't create structures defined here without information
  * from C++ realm. The purposes of these structures is to exchange
  * information from C++ realm */
-import { load, Type as MessageType, Message } from "protobufjs";
+import { load, Type as MessageType } from "protobufjs";
 import { protoPath } from "./message";
 import { waitFor } from "../base/utility";
 import { assert } from "../base/assert";
@@ -178,7 +178,7 @@ export class RingPipe {
         const bytes_to_read = this._pipe_buffer[rIdx];
         assert(() => { return bytes_to_read > 0; });
 
-        this._updateReadIdx(this._next(rIdx));
+        this._forwardRIDX(1);
 
         return await this._readFromBuffer(bytes_to_read);
     }
@@ -214,7 +214,7 @@ export class RingPipe {
                 this._readCrossEnd(meta, bytes_in_buffer);
             }
 
-            this._updateReadIdx(meta.r_idx);
+            this._forwardRIDX(bytes_in_buffer);
             remain -= bytes_in_buffer;
         }
 
