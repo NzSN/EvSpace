@@ -7,6 +7,7 @@ import { NativeEvaluator } from "../src/web/evaluator_native";
 import { WasmEvaluator } from "../src/web/evaluator_wasm";
 import { Platform } from "../src/web/platforms";
 
+
 test("Echo test", async () => {
     const mod = await native;
 
@@ -21,20 +22,14 @@ test("Echo test", async () => {
 
     while (count > 0) {
         payload.counter = count;
-        pipe.write(payload);
+        await pipe.write(payload);
 
-        while (!pipe.readable()) {
-            await delay(1);
-        }
-        let msg = pipe.read();
-
+        let msg = await pipe.read();
+        expect(msg != undefined).toBeTruthy();
         expect(msg?.counter == count).toBeTruthy();
 
         --count;
     }
-
-    payload.counter = 0;
-    pipe.write(payload);
 })
 
 test("Native Async", async () => {

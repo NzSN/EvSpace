@@ -42,12 +42,8 @@ export class WasmEvaluator implements Evaluator {
         let payload = { "counter" : 0 };
         while (count > 0) {
             payload.counter = count;
-            pipe.write(payload);
-
-            while (!pipe.readable()) {
-                await delay(1);
-            }
-            let msg = pipe.read();
+            await pipe.write(payload);
+            const msg = await pipe.read();
 
             f(msg?.counter);
 

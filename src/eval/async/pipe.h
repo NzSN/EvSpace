@@ -354,9 +354,9 @@ private:
     uint8_t* msg_buffer_current = msg_buffer.get();
 
     while (remain > 0) {
-      size_t free_bytes_in_buffer = std::min(
+      size_t n_bytes_writable = std::min(
         FreeBytesInBuffer(), remain);
-      if (free_bytes_in_buffer == 0) {
+      if (n_bytes_writable == 0) {
         waitNonfull();
         continue;
       }
@@ -364,14 +364,14 @@ private:
       ASSERT(msg_buffer.get() <= msg_buffer_current &&
              msg_buffer_current < msg_buffer.get() + bytes_to_write);
 
-      if (free_bytes_in_buffer <= FreeBytesToEnd(current)) {
-        writeConsecutive(&current, &msg_buffer_current, free_bytes_in_buffer);
+      if (n_bytes_writable <= FreeBytesToEnd(current)) {
+        writeConsecutive(&current, &msg_buffer_current, n_bytes_writable);
       } else {
-        writeCrossEnd(&current, &msg_buffer_current, free_bytes_in_buffer);
+        writeCrossEnd(&current, &msg_buffer_current, n_bytes_writable);
       }
 
       updateIdx<W_IDX>(current);
-      remain -= free_bytes_in_buffer;
+      remain -= n_bytes_writable;
     }
 
     return true;

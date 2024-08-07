@@ -20,12 +20,9 @@ export class NativeEvaluator implements Evaluator {
         let payload = { "counter" : 0 };
         while (count > 0) {
             payload.counter = count;
-            pipe.write(payload);
+            await pipe.write(payload);
 
-            while (!pipe.readable()) {
-                await delay(1);
-            }
-            let msg = pipe.read();
+            const msg = await pipe.read();
 
             f(msg?.counter);
 

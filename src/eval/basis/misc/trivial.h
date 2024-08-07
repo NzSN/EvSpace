@@ -20,21 +20,18 @@ struct Echo : AsyncBasis<T> {
   static void DoEcho(PIPE(T) pipe) {
     Counter counter;
     while (true) {
-      if (pipe->readable()) {
-        auto msg = pipe->read();
-        if (msg.has_value()) {
-          if (msg.value().counter() == 0) {
-            return;
-          } else {
-            while (!pipe->writable()) {
-              std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-            counter.set_counter(msg.value().counter());
-            pipe->write(counter);
+      auto msg = pipe->read();
+      if (msg.has_value()) {
+        if (msg.value().counter() == 0) {
+          return;
+        } else {
+          while (!pipe->writable()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
           }
+          counter.set_counter(msg.value().counter());
+          pipe->write(counter);
         }
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 
