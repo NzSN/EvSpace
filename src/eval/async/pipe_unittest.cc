@@ -211,10 +211,6 @@ void Adder(
   std::condition_variable* cv,
   size_t num_of_producer) {
 
-  // Wait for producer
-  std::this_thread::sleep_for(
-    std::chrono::milliseconds(100));
-
   while (true) {
       auto msg = pipe->read();
       if (msg.has_value()) {
