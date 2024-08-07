@@ -33,7 +33,7 @@ struct Echo : AsyncBasis<T> {
   }
 
   DEFINE_SYMMETRIC_ASYNC_INTERFACE(
-    T, operator(), Echo::DoEcho, ([]{ return 100; })());
+    T, operator(), Echo::DoEcho, ([]{ return 64; })());
 };
 
 } // MISC

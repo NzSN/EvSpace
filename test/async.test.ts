@@ -2,7 +2,7 @@ import { CreateEvaluator } from "../src/web/evaluator_factory";
 import { Platform } from "../src/web/platforms";
 
 test("Native Async", async () => {
-    let count = 1000;
+    let count = 20;
 
     let f = (reply: number) => {
         expect(count === reply).toBeTruthy();

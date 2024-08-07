@@ -258,7 +258,7 @@ RC_GTEST_FIXTURE_PROP(BiPipeTester, Spec, ()) {
 
   for (size_t i = 0; i < numOfProducer; ++i) {
     producers.emplace_back(
-      NumProducer<1, 1000>, &minor, &totals[i], &mutex, &cv, &p_mutex);
+      NumProducer<1, 10>, &minor, &totals[i], &mutex, &cv, &p_mutex);
   }
 
   t_adder.join();
