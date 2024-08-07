@@ -8,7 +8,4 @@
   DECLARED_SORT_BASISES(V)                        \
   DECLARED_MISC_BASISES(V)
 
-#define EMBIND_BASISES(V)                       \
-  EMBIND_MISC_BASISES(V)
-
 #endif /* EVSPACE_EVAL_BASIS_BASIS_DECLARATIONS_H_ */
