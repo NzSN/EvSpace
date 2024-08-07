@@ -55,7 +55,7 @@ struct MAPPING_TO_NATIVE;
 
 #define DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TO_NATIVE(C_TYPE, N_TYPE, SUBTYPE)       \
   template<>                                             \
-  struct MAPPING_TO_NATIVE<C_TYPE> {                       \
+  struct MAPPING_TO_NATIVE<C_TYPE> {                     \
     using type = N_TYPE;                                 \
     static bool check(const Napi::Value& value) {        \
       return value.IsTypedArray() &&                     \
@@ -68,12 +68,12 @@ TYPED_ARRAY_MAPPING_LIST(DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TO_NATIVE);
 #undef DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE
 
 #define DECLARE_PRIMITIVE_MAPPING_FROM_C_TO_NATIVE(C_TYPE, N_TYPE, CHECK) \
-  template<>                                                         \
-  struct MAPPING_TO_NATIVE<C_TYPE> {                                   \
-    using type = N_TYPE;                                             \
-    static bool check(const Napi::Value& value) {                    \
-      return value.CHECK();                                          \
-    }                                                                \
+  template<>                                                              \
+  struct MAPPING_TO_NATIVE<C_TYPE> {                                      \
+    using type = N_TYPE;                                                  \
+    static bool check(const Napi::Value& value) {                         \
+      return value.CHECK();                                               \
+    }                                                                     \
   };
 PRIMITIVE_TYPE_MAPPING_LIST(DECLARE_PRIMITIVE_MAPPING_FROM_C_TO_NATIVE)
 #undef DECLARE_PRIMITIVE_MAPPING_FROM_C_TO_NATIVE
@@ -457,15 +457,15 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
 #define EVAL_WITHOUT_ARGS(B, R, ...) \
   return CODEGEN::Eval<R(*)()>( \
     EVSPACE::BASIS::DECL::B, std::tuple{}, info)
-#define EVAL(B, R, ...)       \
-  GET_MACRO_5(                \
-    _0,                       \
-    ##__VA_ARGS__,            \
-    EVAL_WITH_ARGS,           \
-    EVAL_WITH_ARGS,            \
-    EVAL_WTIH_ARGS,            \
-    EVAL_WITH_ARGS,            \
-    EVAL_WITH_ARGS,                             \
+#define EVAL(B, R, ...) \
+  GET_MACRO_5(          \
+    _0,                 \
+    ##__VA_ARGS__,      \
+    EVAL_WITH_ARGS,     \
+    EVAL_WITH_ARGS,     \
+    EVAL_WTIH_ARGS,     \
+    EVAL_WITH_ARGS,     \
+    EVAL_WITH_ARGS,     \
     EVAL_WITHOUT_ARGS)(B, R, __VA_ARGS__)
 
 
@@ -477,11 +477,11 @@ auto Eval(FN fn, NodeTypes<Ts...> t, const Napi::CallbackInfo& info) {
 #define NODE_NATIVE_WRAPPER_EVAL(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE) \
   PARA_TYPE(EVAL);
 
-#define SPAWN_NODE_NATIVE_WRAPPER_SIGNATURE(    \
-  DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE, IS_C_LINKAGE)     \
-  Napi::Value _##DECLARE(const Napi::CallbackInfo& info) {              \
+#define SPAWN_NODE_NATIVE_WRAPPER_SIGNATURE(                                   \
+  DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE, IS_C_LINKAGE)                      \
+  Napi::Value _##DECLARE(const Napi::CallbackInfo& info) {                     \
     NODE_NATIVE_WRAPPER_PARAM_TRANS(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE); \
-    NODE_NATIVE_WRAPPER_EVAL(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE); \
+    NODE_NATIVE_WRAPPER_EVAL(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE);        \
   }
 
 #define REGISTERS(DECLARE, SIGNATURE, PARA_NAME, PARA_TYPE, IS_C_LINKAGE) \
