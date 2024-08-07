@@ -3,7 +3,7 @@ export function waitFor(predicate: () => boolean): Promise<void> {
         if (predicate()) {
             resolve();
         } else {
-            setTimeout(_ => waiting(resolve), 10);
+            setTimeout(_ => waiting(resolve), 1);
         }
     };
     return new Promise(waiting);
