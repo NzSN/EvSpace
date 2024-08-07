@@ -25,9 +25,6 @@ struct Echo : AsyncBasis<T> {
         if (msg.value().counter() == 0) {
           return;
         } else {
-          while (!pipe->writable()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          }
           counter.set_counter(msg.value().counter());
           pipe->write(counter);
         }
@@ -36,7 +33,7 @@ struct Echo : AsyncBasis<T> {
   }
 
   DEFINE_SYMMETRIC_ASYNC_INTERFACE(
-    T, operator(), Echo::DoEcho, ([]{ return 10; })());
+    T, operator(), Echo::DoEcho, ([]{ return 100; })());
 };
 
 } // MISC
