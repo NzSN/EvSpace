@@ -254,13 +254,15 @@ private:
 
   template<RW_HEAD head, typename = std::enable_if_t<head == R_IDX>,
            typename = int>
-  void updateIdx(uint8_t* addr) REQUIRES(r_mutex_) {
+  void updateIdx(uint8_t* addr) REQUIRES(r_mutex_) EXCLUDES(cv_mutex_) {
+    std::lock_guard lock(cv_mutex_);
     *r_idx_ = IdxOfAddr(addr);
     cv_.notify_one();
   }
 
   template<RW_HEAD head, typename = std::enable_if_t<head == W_IDX>>
-  void updateIdx(uint8_t* addr) REQUIRES(w_mutex_) {
+  void updateIdx(uint8_t* addr) REQUIRES(w_mutex_) EXCLUDES(cv_mutex_){
+    std::lock_guard lock(cv_mutex_);
     *w_idx_ = IdxOfAddr(addr);
     cv_.notify_one();
   }
@@ -288,31 +290,13 @@ private:
   }
 
   void waitNonfull() EXCLUDES(cv_mutex_) {
-    size_t duration = 1;
-
-    while (isFull()) {
-      std::unique_lock lock(cv_mutex_);
-      cv_.wait_for(lock,
-                   std::chrono::milliseconds(duration),
-                   [&]{ return !isFull(); });
-      duration = std::min(
-        duration << 2,
-        static_cast<decltype(duration)>(10));
-    }
+    std::unique_lock lock(cv_mutex_);
+    cv_.wait(lock, [&]{ return !isFull(); });
   }
 
   void waitNonempty() EXCLUDES(cv_mutex_) {
-    size_t duration = 1;
-
-    while (isEmpty()) {
-      std::unique_lock lock(cv_mutex_);
-      cv_.wait_for(lock,
-                   std::chrono::milliseconds(1),
-                   [&]{ return !isEmpty(); });
-      duration = std::min(
-        duration << 2,
-        static_cast<decltype(duration * 2)>(10));
-    }
+    std::unique_lock lock(cv_mutex_);
+    cv_.wait(lock, [&]{ return !isEmpty(); });
   }
 
   size_t UnreadBytesInBuffer() const NO_THREAD_SAFETY_ANALYSIS {
