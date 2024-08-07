@@ -1,7 +1,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdlib>
-#include <exception>
 #include <gtest/gtest.h>
 #include <mutex>
 #include <optional>
