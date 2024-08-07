@@ -4,7 +4,6 @@
 #include "base/assert.h"
 #include "eval/basis/basis.h"
 #include "eval/async/async.h"
-#include <type_traits>
 
 namespace EVSPACE {
 namespace EVAL {
