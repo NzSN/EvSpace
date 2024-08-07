@@ -5,11 +5,8 @@ import { delay } from "../src/web/utility.js";
 test("Napi Version", async () => {
     expect(native != undefined).toBeTruthy();
 
-    console.log(native);
     let meta = native.Echo();
-    console.log(meta.out.rw_head.buffer);
     await delay(2000);
-    console.log(meta);
 
     let size = 12;
     let buffer = new SharedArrayBuffer(size * 8);

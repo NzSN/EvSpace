@@ -1,0 +1,18 @@
+filegroup(
+    name = "transfer-srcs",
+    srcs = ["pipe.h"],
+    visibility = ["//visibility:public"]
+)
+
+filegroup(
+    name = "transfer-hdrs",
+    srcs = ["pipe.h"],
+    visibility = ["//visibility:public"]
+)
+
+filegroup(
+    name = "transfer-unittest-srcs",
+    srcs = [":transfer-srcs",
+            "pipe_unittest.cc"],
+    visibility = ["//visibility:public"],
+)

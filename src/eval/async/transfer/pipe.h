@@ -14,7 +14,8 @@
 
 #include "base/assert.h"
 #include "base/thread_safety.h"
-#include "base/traits.h"
+
+#include "eval/async/traits.h"
 
 namespace EVSPACE {
 namespace EVAL {
@@ -53,10 +54,6 @@ struct AsyncStructMapping;
 namespace EVSPACE {
 namespace ASYNC {
 struct PipeTester;
-
-DEFINE_TRAIT_HAS_METHOD(ByteSizeLong);
-DEFINE_TRAIT_HAS_METHOD(SerializeToArray);
-DEFINE_TRAIT_HAS_METHOD(ParseFromArray);
 
 template<typename T>
 struct RingPipeMeta;

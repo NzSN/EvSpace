@@ -17,23 +17,26 @@ namespace async = ::EVSPACE::ASYNC;
 
 template<typename T>
 struct Echo : AsyncBasis<T> {
-  static void DoEcho(PIPE(T) pipe) {
-    Counter counter;
-    while (true) {
-      auto msg = pipe->read();
-      if (msg.has_value()) {
-        if (msg.value().counter() == 0) {
-          return;
-        } else {
-          counter.set_counter(msg.value().counter());
-          pipe->write(counter);
+
+  struct EchoTask: public ASYNC::Task<T> {
+    void operator()(ENV_PTR(T) env) override {
+      Counter counter;
+      while (true) {
+        auto msg = env->pipe.read();
+        if (msg.has_value()) {
+          if (msg.value().counter() == 0) {
+            return;
+          } else {
+            counter.set_counter(msg.value().counter());
+            env->pipe.write(counter);
+          }
         }
       }
     }
-  }
+  };
 
   DEFINE_SYMMETRIC_ASYNC_INTERFACE(
-    T, operator(), Echo::DoEcho, ([]{ return 64; })());
+    T, operator(), Echo::EchoTask{}, ([]{ return 64; })());
 };
 
 } // MISC

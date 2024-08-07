@@ -7,6 +7,12 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "message-hdrs",
+    srcs = ["messages.h"],
+    visibility = ["//visibility:public"],
+)
+
 js_library(
     name = "counter_proto_js",
     srcs = ["counter.proto"],

@@ -6,6 +6,7 @@
 #include <emscripten/val.h>
 
 #include "eval/async/async.h"
+#include "eval/async/messages/messages.h"
 #include "eval/basis/basis_declarations.h"
 
 #include "base/utility.h"
@@ -22,28 +23,36 @@ namespace CODEGEN {
 
 #define DECLARE_PIPE_META(MSG)                                \
   em::class_<EmPipeMeta<MSG>>("EmPipeMeta")                   \
-    .property("message_type", &EmPipeMeta<MSG>::message_type) \
-    .property("pipe", &EmPipeMeta<MSG>::pipe)                 \
-    .property("rw_head", &EmPipeMeta<MSG>::rw_head)           \
-    .property("length", &EmPipeMeta<MSG>::length)             \
-    .function("notify_one", &EmPipeMeta<MSG>::notify_one)     \
-    .function("notify_all", &EmPipeMeta<MSG>::notify_all);    \
+  .property("message_type", &EmPipeMeta<MSG>::message_type)   \
+  .property("pipe", &EmPipeMeta<MSG>::pipe)                   \
+  .property("rw_head", &EmPipeMeta<MSG>::rw_head)             \
+  .property("length", &EmPipeMeta<MSG>::length)               \
+  .function("notify_one", &EmPipeMeta<MSG>::notify_one)       \
+  .function("notify_all", &EmPipeMeta<MSG>::notify_all);      \
                                                               \
   em::class_<EmBiPipeMeta<MSG,MSG>>("EmBiPipeMeta")           \
-    .property("in", &EmBiPipeMeta<MSG, MSG>::out_meta)        \
-    .property("out", &EmBiPipeMeta<MSG, MSG>::in_meta);
+  .property("in", &EmBiPipeMeta<MSG, MSG>::out_meta)          \
+  .property("out", &EmBiPipeMeta<MSG, MSG>::in_meta);         \
+                                                              \
+  em::class_<EmControlMeta>("EmControlMeta");                 \
+                                                              \
+  em::class_<EmTaskEnvMeta<MSG>>("EmTaskEnvMeta")             \
+  .property("control", &EmTaskEnvMeta<MSG>::control_meta)     \
+  .property("pipe", &EmTaskEnvMeta<MSG>::pipe_meta);
+
+
 
 
 template<typename T>
 struct EmPipeMeta {
-  EmPipeMeta(std::string msg_type, async::RingPipe<T>& pipe):
-    message_type(msg_type),
+  EmPipeMeta(async::RingPipe<T>& pipe):
+    message_type{async::MESSAGE::MessageType<T>::msg_type},
     pipe(em::typed_memory_view(pipe.length(), pipe.pipe())),
     rw_head{em::typed_memory_view(2, pipe.rw_head_.get())},
     length{pipe.length()},
     instance{&pipe} {}
-  EmPipeMeta(std::string msg_type, async::RingPipeMeta<T>& meta):
-    message_type(msg_type),
+  EmPipeMeta(async::RingPipeMeta<T>& meta):
+    message_type{async::MESSAGE::MessageType<T>::msg_type},
     pipe{em::typed_memory_view(meta.length, meta.pipe)},
     rw_head{em::typed_memory_view(2, meta.rw_head)},
     length{meta.length},
@@ -67,18 +76,30 @@ struct EmPipeMeta {
 
 template<typename T, typename U>
 struct EmBiPipeMeta {
-  EmBiPipeMeta(std::string in_msg_type, std::string out_msg_type,
-               async::BiPipe<T, U>& pipe):
-    in_meta{in_msg_type, pipe.in_},
-    out_meta{out_msg_type, pipe.out_} {}
-  EmBiPipeMeta(std::string in_msg_type, std::string out_msg_type,
-    async::BiPipeMeta<T, U>& meta):
-    in_meta{in_msg_type, meta.in_meta},
-    out_meta{out_msg_type, meta.out_meta} {}
+  EmBiPipeMeta(async::BiPipe<T, U>& pipe):
+    in_meta{async::MESSAGE::MessageType<T>::msg_type, pipe.in_},
+    out_meta{async::MESSAGE::MessageType<U>::msg_type, pipe.out_} {}
+  EmBiPipeMeta(async::BiPipeMeta<T, U>& meta):
+    in_meta{async::MESSAGE::MessageType<T>::msg_type, meta.in_meta},
+    out_meta{async::MESSAGE::MessageType<U>::msg_type, meta.out_meta} {}
 
   EmPipeMeta<T> in_meta;
   EmPipeMeta<U> out_meta;
 };
+
+struct EmControlMeta {
+
+};
+
+template<typename T>
+struct EmTaskEnvMeta {
+  EmTaskEnvMeta(async::TaskEnvMeta<T> env):
+    control_meta{}, pipe_meta{env.pipe_meta} {}
+
+  EmControlMeta control_meta;
+  EmBiPipeMeta<T,T> pipe_meta;
+};
+
 
 template<typename T>
 struct TypeMapping {
@@ -103,7 +124,7 @@ template<typename T>
 struct Conversion<async::RingPipeMeta<T>> {
   static typename TypeMapping<async::RingPipeMeta<T>>::type
   conversion(async::RingPipeMeta<T>& meta) {
-    return EmPipeMeta<T>("Counter", meta);
+    return EmPipeMeta<T>(meta);
   }
 };
 
@@ -111,7 +132,7 @@ template<typename T, typename U>
 struct Conversion<async::BiPipeMeta<T,U>> {
   static typename TypeMapping<async::BiPipeMeta<T, U>>::type
   conversion(async::BiPipeMeta<T, U>& meta) {
-    return EmBiPipeMeta<T,U>("Counter", "Counter", meta);
+    return EmBiPipeMeta<T,U>(meta);
   }
 };
 

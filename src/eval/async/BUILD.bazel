@@ -1,12 +1,22 @@
 filegroup(
     name = "async-srcs",
-    srcs = ["async.h", "pipe.h"],
+    srcs = ["async.h",
+            "async.cc",
+            "traits.h",
+            "//src/eval/async/transfer:transfer-srcs",
+            "//src/eval/async/control:control-srcs",
+            "//src/eval/async/messages:message-srcs"],
     visibility = ["//visibility:public"],
 )
 
 filegroup(
     name = "async-hdrs",
-    srcs = ["async.h", "pipe.h"],
+    srcs = ["async.h",
+            "async.cc",
+            "traits.h",
+            "//src/eval/async/transfer:transfer-hdrs",
+            "//src/eval/async/control:control-hdrs",
+            "//src/eval/async/messages:message-hdrs"],
     visibility = ["//visibility:public"],
 )
 
@@ -14,17 +24,16 @@ cc_library(
     name = "async",
     hdrs = [":async-hdrs",
             "//src/eval/async/messages:message-srcs",
-            ],
+            "//src/eval/async/transfer:transfer-srcs"],
     deps = ["//src/eval/async/messages:counter_cc_proto",
             "//src/base:base"],
     visibility = ["//visibility:public"],
 )
 
-
 cc_test(
     name = "async-unittest",
     srcs = [":async-srcs",
-            "pipe_unittest.cc"],
+            "//src/eval/async/transfer:transfer-unittest-srcs"],
     deps = ["//src/eval/async/messages:counter_cc_proto",
             "@com_google_googletest//:gtest_main",
             "@rapidcheck//:rapidcheck",

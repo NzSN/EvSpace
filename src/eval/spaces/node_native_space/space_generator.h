@@ -8,8 +8,10 @@
 #include <type_traits>
 #include <tuple>
 
-#include "eval/async/pipe.h"
+#include "eval/async/async.h"
 #include "base/utility.h"
+#include "eval/async/control/control.h"
+#include "eval/async/transfer/pipe.h"
 
 #define NAPI_DISABLE_CPP_EXCEPTIONS
 #include <napi.h>
@@ -144,7 +146,6 @@ struct AsyncStructMapping<async::RingPipeMeta<T>> {
     return object;
   }
 };
-
 template<typename T>
 struct AsyncStructMapping<EVSPACE::ASYNC::SymPipeMeta<T>> {
   static Napi::Value mapping(
@@ -156,6 +157,29 @@ struct AsyncStructMapping<EVSPACE::ASYNC::SymPipeMeta<T>> {
                ::mapping(meta.out_meta, info));
     object.Set("out", AsyncStructMapping<ASYNC::RingPipeMeta<T>>
                ::mapping(meta.in_meta, info));
+    return object;
+  }
+};
+template<>
+struct AsyncStructMapping<EVSPACE::ASYNC::ControlMeta> {
+  static Napi::Value mapping(
+    EVSPACE::ASYNC::ControlMeta& meta,
+    const Napi::CallbackInfo& info) {
+
+    return Napi::Object::New(info.Env());
+  }
+};
+template<typename T>
+struct AsyncStructMapping<EVSPACE::ASYNC::TaskEnvMeta<T>> {
+  static Napi::Value mapping(
+    EVSPACE::ASYNC::TaskEnvMeta<T>& meta,
+    const Napi::CallbackInfo& info) {
+
+    auto object = Napi::Object::New(info.Env());
+    object.Set("control", AsyncStructMapping<ASYNC::ControlMeta>
+               ::mapping(meta.control_meta, info));
+    object.Set("pipe", AsyncStructMapping<ASYNC::BiPipeMeta<T, T>>
+               ::mapping(meta.pipe_meta, info));
     return object;
   }
 };
@@ -391,6 +415,18 @@ struct AsNodeExpression<EVSPACE::ASYNC::SymPipeMeta<T>(*)(),
     using Meta = ASYNC::SymPipeMeta<T>;
     auto pipe = f(ArgExtracter<std::tuple<Ts...>>::template argTrans<ExtractInfos>(t)...);
     return AsyncStructMapping<Meta>::mapping(pipe, info);
+  }
+};
+template<typename T, typename... ExtractInfos, typename... Ts>
+struct AsNodeExpression<EVSPACE::ASYNC::TaskEnvMeta<T>(*)(),
+                         std::tuple<ExtractInfos...>,
+                         std::tuple<Ts...>> {
+  static auto eval(EVSPACE::ASYNC::TaskEnvMeta<T>(*f)(),
+                   std::tuple<Ts...>& t,
+                   const Napi::CallbackInfo& info) {
+    using Meta = ASYNC::TaskEnvMeta<T>;
+    auto env = f(ArgExtracter<std::tuple<Ts...>>::template argTrans<ExtractInfos>(t)...);
+    return AsyncStructMapping<Meta>::mapping(env, info);
   }
 };
 template<typename R, typename... Args, typename... ExtractInfos, typename... Ts>

@@ -1,21 +1,26 @@
 #ifndef EVSPACE_EVAL_ASYNC_H_
 #define EVSPACE_EVAL_ASYNC_H_
 
-#include "eval/async/pipe.h"
+#include <thread>
+
+#include "eval/async/traits.h"
+#include "eval/async/messages/messages.h"
+#include "eval/async/control/control.h"
+#include "eval/async/transfer/pipe.h"
 
 namespace EVSPACE {
 namespace ASYNC {
 
-#define ASYNCHRONOUS(T) EVSPACE::ASYNC::SymPipeMeta<T>
+#define ASYNCHRONOUS(T) EVSPACE::ASYNC::TaskEnvMeta<T>
 
 #define ASYNC_PARAM(T) EVSPACE::ASYNC::BiPipeParam<T,T>
 #define INIT_ASYNC_STRUCTURE(T, PARAM)                                \
   ([](ASYNC_PARAM(T)& param) -> auto {                                \
-    auto pipe = std::make_unique<EVSPACE::ASYNC::BiPipe<T,T>>(PARAM); \
-    ASYNCHRONOUS(T) meta = pipe->generateMeta();                       \
-    return std::tuple(meta, std::move(pipe));                         \
+    auto env = std::make_unique<EVSPACE::ASYNC::TaskEnv<T>>(PARAM); \
+    ASYNCHRONOUS(T) meta = env->generateMeta();                       \
+    return std::tuple(meta, std::move(env));                         \
   })(PARAM)
-#define PIPE(T) std::unique_ptr<EVSPACE::ASYNC::BiPipe<T,T>>
+#define ENV_PTR(T) std::unique_ptr<EVSPACE::ASYNC::TaskEnv<T>>
 #define AS_BOOT_ARGS(META) std::get<1>(META)
 #define AS_JS_META(META) std::get<0>(META)
 
@@ -34,6 +39,34 @@ namespace ASYNC {
     return AS_JS_META(meta);                                           \
   }
 
+template<typename T>
+struct TaskEnvMeta {
+  BiPipeMeta<T,T> pipe_meta;
+  ControlMeta control_meta;
+};
+
+template<typename T>
+struct TaskEnv {
+  TaskEnv(ASYNC_PARAM(T) param):
+    control{}, pipe{param} {}
+
+  TaskEnvMeta<T> generateMeta() {
+    TaskEnvMeta<T> meta = {
+      .pipe_meta = pipe.generateMeta(),
+      .control_meta = control.generateMeta(),
+    };
+
+    return meta;
+  }
+
+  Control control;
+  EVSPACE::ASYNC::BiPipe<T,T> pipe;
+};
+
+template<typename T>
+struct Task {
+  virtual void operator()(ENV_PTR(T)) = 0;
+};
 
 } // ASYNC
 } // EVSPACE

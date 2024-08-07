@@ -1,0 +1,11 @@
+filegroup(
+    name = "control-srcs",
+    srcs = ["control.h"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "control-hdrs",
+    srcs = ["control.h"],
+    visibility = ["//visibility:public"],
+)
