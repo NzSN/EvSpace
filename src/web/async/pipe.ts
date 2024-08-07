@@ -174,8 +174,7 @@ export class RingPipe {
         await this._waitNonempty();
 
         // Reading length field of message
-        const rIdx = this._readIdx();
-        const bytes_to_read = this._pipe_buffer[rIdx];
+        const bytes_to_read = this._byteRead();
         assert(() => { return bytes_to_read > 0; });
 
         this._forwardRIDX(1);
