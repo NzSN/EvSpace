@@ -32,7 +32,7 @@ export class WasmEvaluator implements Evaluator {
         return array;
     }
 
-    async echo<T>(count: number, f: (number) => T): Promise<void> {
+    async echo<T>(count: number, f: (n: number) => T): Promise<void> {
         let envMeta: TaskEnvMeta = this._mod.Echo();
         let env: TaskEnv = new TaskEnv(envMeta);
         let pipe: BiPipe = env.pipe;

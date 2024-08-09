@@ -1,6 +1,7 @@
 #ifndef EVSPACE_EVAL_BASIS_SORT_H_
 #define EVSPACE_EVAL_BASIS_SORT_H_
 
+#include <stddef.h>
 #include "eval/basis/basis.h"
 
 namespace EVSPACE {

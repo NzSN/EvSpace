@@ -13,8 +13,6 @@ namespace EVAL {
 namespace BASIS {
 namespace MISC {
 
-namespace async = ::EVSPACE::ASYNC;
-
 template<typename T>
 struct Echo : AsyncBasis<T> {
 
