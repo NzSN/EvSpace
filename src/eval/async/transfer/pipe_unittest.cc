@@ -28,7 +28,8 @@ struct Message {
   }
 
   bool ParseFromArray(const void* data, size_t size) {
-    const unsigned int* data_uint = reinterpret_cast<const unsigned int*>(data);
+    const unsigned int* data_uint =
+      reinterpret_cast<const unsigned int*>(data);
     data_ = *data_uint;
     return true;
   }
