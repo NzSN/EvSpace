@@ -49,22 +49,22 @@ struct MAPPING_TO_NATIVE;
   TYPED_ARRAY_MAPPING_LIST(V)                   \
   PRIMITIVE_TYPE_MAPPING_LIST(V)
 
-#define TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(V)  \
-  /* FROM TO */                                 \
-  V(Napi::Float64Array, size_t)                 \
-  V(Napi::Float32Array, size_t)                 \
-  V(Napi::Uint32Array, size_t)                  \
-  V(Napi::Int32Array, size_t)                   \
+#define TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(V) \
+  /* FROM TO */                               \
+  V(Napi::Float64Array, size_t)               \
+  V(Napi::Float32Array, size_t)               \
+  V(Napi::Uint32Array, size_t)                \
+  V(Napi::Int32Array, size_t)                 \
 
-#define DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TO_NATIVE(C_TYPE, N_TYPE, SUBTYPE)       \
-  template<>                                             \
-  struct MAPPING_TO_NATIVE<C_TYPE> {                     \
-    using type = N_TYPE;                                 \
-    static bool check(const Napi::Value& value) {        \
-      return value.IsTypedArray() &&                     \
-        value.As<Napi::TypedArray>().TypedArrayType() == \
-        SUBTYPE;                                         \
-    }                                                    \
+#define DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TO_NATIVE(C_TYPE, N_TYPE, SUBTYPE) \
+  template<>                                                                  \
+  struct MAPPING_TO_NATIVE<C_TYPE> {                                          \
+    using type = N_TYPE;                                                      \
+    static bool check(const Napi::Value& value) {                             \
+      return value.IsTypedArray() &&                                          \
+        value.As<Napi::TypedArray>().TypedArrayType() ==                      \
+        SUBTYPE;                                                              \
+    }                                                                         \
   };
 
 TYPED_ARRAY_MAPPING_LIST(DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TO_NATIVE);
@@ -85,14 +85,14 @@ template<typename T>
 struct SizeTypeMapping {
   using type = void;
 };
-#define DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE(NT, CT) \
+#define DECLARE_TYPED_ARRAY_MAPPING_FROM_C(NT, CT) \
   template<>                                    \
   struct SizeTypeMapping<NT> {                  \
     using type = CT;                            \
   };
 
-TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE);
-#undef DECLARE_TYPED_ARRAY_MAPPING_FROM_C_TONATIVE_FROM_NATIVE_TO_CTYPE
+TYPED_ARRAY_SIZE_TYPE_MAPPING_LIST(DECLARE_TYPED_ARRAY_MAPPING_FROM_C);
+#undef DECLARE_TYPED_ARRAY_MAPPING_FROM_C
 
 namespace async = EVSPACE::ASYNC;
 template<typename T>
@@ -165,8 +165,6 @@ struct AsyncStructMapping<EVSPACE::ASYNC::SymPipeMeta<T>> {
 };
 template<>
 struct AsyncStructMapping<EVSPACE::ASYNC::ControlMeta> {
-
-
   static Napi::Value mapping(
     EVSPACE::ASYNC::ControlMeta& meta,
     const Napi::CallbackInfo& info) {
@@ -237,16 +235,17 @@ template<typename R, typename... Ts>
 struct Reduce { using type = R; };
 template<template<typename...> class R, typename... Os, typename T, typename... Ts>
 struct Reduce<R<Os...>, T, Ts...> {
+  static_assert(!std::is_pointer_v<T>);
   using type = typename Reduce<R<Os..., typename MAPPING_TO_NATIVE<T>::type>, Ts...>::type;
 };
 template<template<typename...> class R, typename... Os, typename T, typename U, typename... Ts>
 struct Reduce<R<Os...>, T*, U, Ts...> {
   // Declaration Layer Interface must declare parameter to indicate
   // valid range of a pointer at the pos next to where pointer parameter
-  // is declared. Other wise treat as not-well form.
+  // is declared. Other wise treat as ill-form.
   //
   // Typically, the type U to indicate valid ranges should be size_t
-  static_assert(std::is_same_v<U, size_t>,
+  static_assert(std::is_convertible_v<U, size_t>,
                 "Parameter to indicate valid range in Memory "
                 "of pointer must at pos next to the pointer");
   // U is ignored due to such message are passed by Napi::TypeArray<T>.
@@ -351,8 +350,8 @@ struct DeclareArg_Trait<DeclareArg<T, ArgIDX<I>>> {
   constexpr static size_t pos = I;
 };
 
-#define NATIVE_TRANSLATION_LIST(V)               \
-  /* NativeType,         CType,   Method */      \
+#define NATIVE_TRANSLATION_LIST(V)             \
+  /* NativeType,         CType,   Method */    \
   V(Napi::Number       , double , DoubleValue) \
   V(Napi::Float64Array , double*, Data)        \
   V(Napi::Float64Array , size_t , ElementLength)
