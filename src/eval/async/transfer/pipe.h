@@ -1,7 +1,6 @@
 #ifndef EVSPACE_EVAL_ASYNC_PIPE_H_
 #define EVSPACE_EVAL_ASYNC_PIPE_H_
 
-#include <chrono>
 #include <condition_variable>
 #include <cstring>
 #include <mutex>
