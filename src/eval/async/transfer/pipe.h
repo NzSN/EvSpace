@@ -398,14 +398,6 @@ private:
   }
 
   template<bool consecutive = false,
-           typename = std::enable_if_t<consecutive>,
-           typename = int>
-  bool writeIntoBuffer(const T& message, uint8_t* current)
-    REQUIRES(w_mutex_) {
-    return true;
-  }
-
-  template<bool consecutive = false,
            typename = std::enable_if_t<!consecutive>>
   std::optional<T> readFromBuffer(uint8_t* current, size_t bytes_to_read)
     REQUIRES(r_mutex_) {
