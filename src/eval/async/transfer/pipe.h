@@ -114,21 +114,21 @@ public:
     length_     {other.length_} {}
 
   RingPipe& operator=(RingPipe&& other) {
-    this->pipe_ = std::move(other.pipe_);
+    this->pipe_       = std::move(other.pipe_);
 
     this->rw_head_[0] = other.rw_head_[0];
     this->rw_head_[1] = other.rw_head_[1];
 
-    this->r_idx_ = other.r_idx_;
-    this->w_idx_ = other.w_idx_;
+    this->r_idx_      = other.r_idx_;
+    this->w_idx_      = other.w_idx_;
 
-    this->begin_ = other.begin_;
-    this->end_ = other.end_;
+    this->begin_      = other.begin_;
+    this->end_        = other.end_;
 
     this->begin_addr_ = other.begin_addr_;
-    this->end_addr_ = other.end_addr_;
+    this->end_addr_   = other.end_addr_;
 
-    this->length_ = other.length_;
+    this->length_     = other.length_;
 
     return *this;
   }

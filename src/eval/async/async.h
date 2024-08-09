@@ -14,11 +14,11 @@ namespace ASYNC {
 #define ASYNCHRONOUS(T) EVSPACE::ASYNC::TaskEnvMeta<T>
 
 #define ASYNC_PARAM(T) EVSPACE::ASYNC::BiPipeParam<T,T>
-#define INIT_ASYNC_STRUCTURE(T, PARAM)                                \
-  ([](ASYNC_PARAM(T)& param) -> auto {                                \
+#define INIT_ASYNC_STRUCTURE(T, PARAM)                              \
+  ([](ASYNC_PARAM(T)& param) -> auto {                              \
     auto env = std::make_unique<EVSPACE::ASYNC::TaskEnv<T>>(PARAM); \
-    ASYNCHRONOUS(T) meta = env->generateMeta();                       \
-    return std::tuple(meta, std::move(env));                         \
+    ASYNCHRONOUS(T) meta = env->generateMeta();                     \
+    return std::tuple(meta, std::move(env));                        \
   })(PARAM)
 #define ENV_PTR(T) std::unique_ptr<EVSPACE::ASYNC::TaskEnv<T>>
 #define AS_BOOT_ARGS(META) std::get<1>(META)
